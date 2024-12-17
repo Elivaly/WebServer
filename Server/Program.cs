@@ -9,3 +9,8 @@ using (DBC db = new ())
         Console.WriteLine($"{user.id} {user.name} - Пароль:{user.password}, Категория:{user.description}");
     }
 }
+
+using (DBC db = new()) 
+{ 
+
+}
