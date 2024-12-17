@@ -10,7 +10,7 @@ namespace Server.Database
     internal class DBC : DbContext
     {
 
-        public DbSet<customers> customers { get; set; } = null!;
+        public DbSet<Сustomers> customers { get; set; } = null!;
 
         public DBC()
         {
