@@ -4,6 +4,7 @@ using AuthService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace Web.Controllers
 {
@@ -20,7 +21,7 @@ namespace Web.Controllers
                 return BadRequest("Name is required."); 
             }
             List<string> users = new List<string>();
-            using (DBC dBC = new DBC())
+            using (DBC dBC = new ())
             {
                 users = dBC.customers
                     .Where(x => x.name == name)
@@ -44,7 +45,7 @@ namespace Web.Controllers
                 return BadRequest("Description is required."); 
             }
             List <string> users = new List<string>();
-            using (DBC dBC = new DBC())
+            using (DBC dBC = new ())
             {
                 users = dBC.customers
                     .Where(x => x.description == desc)
@@ -57,6 +58,29 @@ namespace Web.Controllers
                 return NotFound("No users found with given description");
             }
             return Ok(users);
+        }
+
+        [HttpGet]
+        [Route("GetByIndex")]
+        public IActionResult GetByIndex([FromQuery][Required] int index) 
+        {
+            string user;
+            if(index <= 0) 
+            {
+                return BadRequest("Index must be greater than zero");
+            }
+            using (DBC dBC = new ()) 
+            {
+                user = dBC.customers
+                    .Where(x => x.id == index)
+                    .Select(x => x.name)
+                    .First();
+            };
+            if (user == null) 
+            {
+                return NotFound("No user with given index");
+            }
+            return Ok(user);
         }
 
         [HttpGet]
@@ -78,29 +102,77 @@ namespace Web.Controllers
             return Ok(users);
         }
 
-        [HttpGet]
+        [HttpPut]
         [Route("UpdatePasswordByIndex")]
         public IActionResult UpdatePasswordByIndex([FromQuery][Required] int index, [FromQuery][Required] string newPassword) 
         {
             if (index <= 0) 
             {
-                return BadRequest("Index is required.");
+                return BadRequest("Index must be greater than zero.");
             }
             if (string.IsNullOrEmpty(newPassword)) 
             { 
                 return BadRequest("New password is required."); 
             }
-            List<string> users = new List<string>();
-            using(DBC dBC = new DBC()) 
+            using(DBC dBC = new ()) 
             {
                 var user = dBC.customers.FirstOrDefault(x => x.id == index);
                 if (user == null)
                 {
                     return NotFound("No user found with the given index.");
                 } 
-                user.password = newPassword; dBC.SaveChanges(); 
+                user.password = newPassword; 
+                dBC.SaveChanges(); 
             };
             return Ok("Password was changed");
         }
+
+        [HttpPut]
+        [Route("UpdatePasswordByName")]
+        public IActionResult UpdatePasswordByname([FromQuery][Required] string name, [FromQuery][Required] string newPassword) 
+        {
+            if (string.IsNullOrEmpty(name)) 
+            {
+                return BadRequest("Name is required.");
+            }
+            if (string.IsNullOrEmpty(newPassword)) 
+            {
+                return BadRequest("Password is required.");
+            }
+            using(DBC dBC = new()) 
+            {
+                var user = dBC.customers.Find(name);
+                if(user == null) 
+                {
+                    return NotFound("No user found with the give name.");
+                }
+                user.password = newPassword;
+                dBC.SaveChanges();
+            };
+            return Ok("Password was changed");
+
+        }
+
+        [HttpDelete]
+        [Route("DeleteUserByIndex")]
+        public IActionResult DeleteUserByIndex([FromQuery][Required] int index) 
+        {
+            if (index <= 0) 
+            {
+                return BadRequest("Index must be greater than zero");
+            }
+            using (DBC dBC = new ()) 
+            {
+                var user = dBC.customers.FirstOrDefault(x => x.id == index); 
+                if (user == null) 
+                { 
+                    return NotFound("No user found with the given index."); 
+                }
+                dBC.customers.Remove(user);
+                dBC.SaveChanges();
+            }
+            return Ok("User was deleted");
+        }
+
     }
 }
