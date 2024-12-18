@@ -82,7 +82,7 @@ namespace Web.Controllers
         [Route("UpdatePasswordByIndex")]
         public IActionResult UpdatePasswordByIndex([FromQuery][Required] int index, [FromQuery][Required] string newPassword) 
         {
-            if (index > 0) 
+            if (index <= 0) 
             {
                 return BadRequest("Index is required.");
             }
