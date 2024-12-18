@@ -2,9 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using AuthService.Database;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddDbContext<DBC>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+var builder = WebApplication.CreateBuilder(args);;
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

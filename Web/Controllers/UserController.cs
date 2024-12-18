@@ -17,12 +17,6 @@ namespace Web.Controllers
 
     public class UserController : ControllerBase
     {
-        private readonly DBC _context; 
-        public UserController(DBC context)
-        {
-            _context = context;
-        }
-
         [HttpGet]
         [Route("GetByName")]
         public IActionResult GetByName([FromQuery][Required] string name) 
@@ -32,12 +26,14 @@ namespace Web.Controllers
                 return BadRequest("Name is required."); 
             }
             List<string> users = new List<string>();
-            
-                users = _context.users
+            using (DBC db = new())
+            {
+                users = db.users
                     .Where(x => x.name == name)
                     .Select(x => x.name)
                     .Distinct()
                     .ToList();
+            }
             if (users == null || users.Count == 0) 
             {
                 return NotFound("No users found with given name");
@@ -54,11 +50,14 @@ namespace Web.Controllers
                 return BadRequest("Description is required."); 
             }
             List <string> users = new List<string>();
-            users = _context.users
-                .Where(x => x.description == desc)
-                .Select(x => x.name)
-                .Distinct()
-                .ToList();
+            using (DBC db = new())
+            {
+                users = db.users
+                    .Where(x => x.description == desc)
+                    .Select(x => x.name)
+                    .Distinct()
+                    .ToList();
+            }
             if (users == null || users.Count == 0) 
             {
                 return NotFound("No users found with given description");
@@ -75,10 +74,13 @@ namespace Web.Controllers
             {
                 return BadRequest("Index must be greater than zero");
             }
-            user = _context.users
-                    .Where(x => x.id == index)
-                    .Select(x => x.name)
-                    .FirstOrDefault();
+            using (DBC db = new())
+            {
+                user = db.users
+                        .Where(x => x.id == index)
+                        .Select(x => x.name)
+                        .FirstOrDefault();
+            }
             if (user == null) 
             {
                 return NotFound("No user with given index");
@@ -91,10 +93,13 @@ namespace Web.Controllers
         public IActionResult GetAllUsers()
         {
             List<string> users = new List<string>();
-            users = _context.users
-                    .Select(x => x.name)
-                    .Distinct()
-                    .ToList(); 
+            using (DBC db = new())
+            {
+                users = db.users
+                        .Select(x => x.name)
+                        .Distinct()
+                        .ToList();
+            }
             if(users == null || users.Count == 0) 
             {
                 return NotFound("No users found");
@@ -114,14 +119,16 @@ namespace Web.Controllers
             { 
                 return BadRequest("New password is required."); 
             }
-
-            var user = _context.users.FirstOrDefault(x => x.id == index);
-            if (user == null)
+            using (DBC db = new())
             {
-                return NotFound("No user found with the given index.");
-            } 
-            user.password = newPassword; 
-            _context.SaveChanges(); 
+                var user = db.users.FirstOrDefault(x => x.id == index);
+                if (user == null)
+                {
+                    return NotFound("No user found with the given index.");
+                }
+                user.password = newPassword;
+                db.SaveChanges();
+            }
 
             return Ok("Password was changed");
         }
@@ -138,14 +145,16 @@ namespace Web.Controllers
             {
                 return BadRequest("Password is required.");
             }
-            var user = _context.users.FirstOrDefault(x => x.name == name);
-            if (user == null) 
+            using (DBC db = new())
             {
-                return NotFound("No user found with the give name.");
+                var user = db.users.FirstOrDefault(x => x.name == name);
+                if (user == null)
+                {
+                    return NotFound("No user found with the give name.");
+                }
+                user.password = newPassword;
+                db.SaveChanges();
             }
-            user.password = newPassword;
-            _context.SaveChanges();
-
             return Ok("Password was changed");
 
         }
@@ -158,15 +167,16 @@ namespace Web.Controllers
             {
                 return BadRequest("Index must be greater than zero");
             }
-           
-            var user = _context.users.FirstOrDefault(x => x.id == index); 
-            if (user == null) 
-            { 
-                return NotFound("No user found with the given index."); 
+            using (DBC db = new())
+            {
+                var user = db.users.FirstOrDefault(x => x.id == index);
+                if (user == null)
+                {
+                    return NotFound("No user found with the given index.");
+                }
+                db.users.Remove(user);
+                db.SaveChanges();
             }
-            _context.users.Remove(user);
-            _context.SaveChanges();
-           
             return Ok("User was deleted");
         }
 
@@ -178,13 +188,16 @@ namespace Web.Controllers
             {
                 return BadRequest("Name is required");
             }
-            var user =  _context.users.FirstOrDefault(x => x.name == name);
-            if (user == null)
-            { 
-                return NotFound("No user with the given name.");
+            using (DBC db = new())
+            {
+                var user = db.users.FirstOrDefault(x => x.name == name);
+                if (user == null)
+                {
+                    return NotFound("No user with the given name.");
+                }
+                db.users.Remove(user);
+                db.SaveChanges();
             }
-            _context.users.Remove(user);
-            _context.SaveChanges();
             return Ok("User was deleted");
         }
 
@@ -198,12 +211,16 @@ namespace Web.Controllers
             }
             return Ok("Success test");
         }
-        /*
+        
         [HttpPost]
         [Route("AddUser")]
         public IActionResult AddUser([FromQuery][Required] string name, [FromQuery][Required] string password, [FromQuery][Required] string desc) 
         {
-            return CreatedAtAction();
-        }*/
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(desc))
+            {
+                return BadRequest("Data is required.");
+            }
+            return Ok("User was created");
+        }
     }
 }
