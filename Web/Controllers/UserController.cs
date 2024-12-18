@@ -77,5 +77,30 @@ namespace Web.Controllers
             }
             return Ok(users);
         }
+
+        [HttpGet]
+        [Route("UpdatePasswordByIndex")]
+        public IActionResult UpdatePasswordByIndex([FromQuery][Required] int index, [FromQuery][Required] string newPassword) 
+        {
+            if (index > 0) 
+            {
+                return BadRequest("Index is required.");
+            }
+            if (string.IsNullOrEmpty(newPassword)) 
+            { 
+                return BadRequest("New password is required."); 
+            }
+            List<string> users = new List<string>();
+            using(DBC dBC = new DBC()) 
+            {
+                var user = dBC.customers.FirstOrDefault(x => x.id == index);
+                if (user == null)
+                {
+                    return NotFound("No user found with the given index.");
+                } 
+                user.password = newPassword; dBC.SaveChanges(); 
+            };
+            return Ok("Password was changed");
+        }
     }
 }
