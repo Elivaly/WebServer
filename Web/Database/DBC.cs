@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
-using AuthService;
 using Microsoft.EntityFrameworkCore;
 
-namespace Web
+namespace AuthService.Database
 {
     public class DBC : DbContext
     {
-        public DbSet<Customers> customers { get; set; } = null!;
+        public DbSet<User> users { get; set; } = null!;
 
         public DBC()
         {

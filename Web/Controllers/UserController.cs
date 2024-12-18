@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using AuthService;
+using AuthService.Database;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.OpenApi.Extensions;
 
 namespace Web.Controllers
 {
@@ -23,7 +25,7 @@ namespace Web.Controllers
             List<string> users = new List<string>();
             using (DBC dBC = new ())
             {
-                users = dBC.customers
+                users = dBC.users
                     .Where(x => x.name == name)
                     .Select(x => x.name)
                     .Distinct()
@@ -47,7 +49,7 @@ namespace Web.Controllers
             List <string> users = new List<string>();
             using (DBC dBC = new ())
             {
-                users = dBC.customers
+                users = dBC.users
                     .Where(x => x.description == desc)
                     .Select(x => x.name)
                     .Distinct()
@@ -71,7 +73,7 @@ namespace Web.Controllers
             }
             using (DBC dBC = new ()) 
             {
-                user = dBC.customers
+                user = dBC.users
                     .Where(x => x.id == index)
                     .Select(x => x.name)
                     .First();
@@ -90,7 +92,7 @@ namespace Web.Controllers
             List<string> users = new List<string>();
             using (DBC dBC = new()) 
             { 
-                users = dBC.customers
+                users = dBC.users
                     .Select(x => x.name)
                     .Distinct()
                     .ToList(); 
@@ -116,7 +118,7 @@ namespace Web.Controllers
             }
             using(DBC dBC = new ()) 
             {
-                var user = dBC.customers.FirstOrDefault(x => x.id == index);
+                var user = dBC.users.FirstOrDefault(x => x.id == index);
                 if (user == null)
                 {
                     return NotFound("No user found with the given index.");
@@ -141,7 +143,7 @@ namespace Web.Controllers
             }
             using(DBC dBC = new()) 
             {
-                var user = dBC.customers.Find(name);
+                var user = dBC.users.Find(name);
                 if(user == null) 
                 {
                     return NotFound("No user found with the give name.");
@@ -163,12 +165,33 @@ namespace Web.Controllers
             }
             using (DBC dBC = new ()) 
             {
-                var user = dBC.customers.FirstOrDefault(x => x.id == index); 
+                var user = dBC.users.FirstOrDefault(x => x.id == index); 
                 if (user == null) 
                 { 
                     return NotFound("No user found with the given index."); 
                 }
-                dBC.customers.Remove(user);
+                dBC.users.Remove(user);
+                dBC.SaveChanges();
+            };
+            return Ok("User was deleted");
+        }
+
+        [HttpDelete]
+        [Route("DeleteUserByName")]
+        public IActionResult DeleteUserByName([FromQuery][Required] string name) 
+        {
+            if (string.IsNullOrEmpty(name)) 
+            {
+                return BadRequest("Name is required");
+            }
+            using (DBC dBC = new()) 
+            {
+                var user =  dBC.users.FirstOrDefault(x => x.name == name);
+                if (user == null)
+                { 
+                    return NotFound("No user with the given name.");
+                }
+                dBC.users.Remove(user);
                 dBC.SaveChanges();
             }
             return Ok("User was deleted");
