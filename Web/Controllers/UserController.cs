@@ -28,6 +28,10 @@ namespace Web.Controllers
                     .Distinct()
                     .ToList();
             };
+            if (users == null || users.Count == 0) 
+            {
+                return NotFound("No users found with given name");
+            }
             return Ok(users);
         }
 
@@ -48,6 +52,10 @@ namespace Web.Controllers
                     .Distinct()
                     .ToList();
             };
+            if (users == null || users.Count == 0) 
+            {
+                return NotFound("No users found with given description");
+            }
             return Ok(users);
         }
 
@@ -63,6 +71,10 @@ namespace Web.Controllers
                     .Distinct()
                     .ToList(); 
             };
+            if(users == null || users.Count == 0) 
+            {
+                return NotFound("No users found");
+            }
             return Ok(users);
         }
     }
