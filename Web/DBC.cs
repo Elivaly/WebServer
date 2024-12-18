@@ -14,7 +14,7 @@ namespace Web
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5104;Database=users;Username=postgres;Password=1");
+            optionsBuilder.UseNpgsql("Host=localhost;Port=5104;Database=users;Username=postgres;Password=1;SSL Mode=Disable; Timeout = 1024");
         }
     }
 }
