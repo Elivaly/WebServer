@@ -9,7 +9,14 @@ public class DBC : DbContext
     public DBC(DbContextOptions<DBC> options) : base(options) 
     { 
         Console.WriteLine("Initializing database context...");
-        InitializeDatabase(); 
+        try 
+        { 
+            InitializeDatabase();
+        } 
+        catch (Exception ex) 
+        { 
+            Console.WriteLine($"Initialization failed: {ex.Message}");
+        }
         Console.WriteLine("Database context initialized.");
     }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
@@ -28,7 +35,8 @@ public class DBC : DbContext
             if (Database.GetPendingMigrations().Any()) 
             { 
                 Console.WriteLine("Applying pending migrations...");
-                Database.Migrate(); Console.WriteLine("Migrations applied.");
+                Database.Migrate(); 
+                Console.WriteLine("Migrations applied.");
             } 
             else 
             {
@@ -37,7 +45,8 @@ public class DBC : DbContext
         } 
         catch (Exception ex)
         { 
-            Console.WriteLine($"An error occurred while initializing the database: {ex.Message}"); 
+            Console.WriteLine($"An error occurred while initializing the database: {ex.Message}");
+            throw;
         } 
     }
 }
