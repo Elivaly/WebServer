@@ -7,13 +7,16 @@ namespace AuthService.Database
     {
         public DbSet<User> users { get; set; } = null!;
 
-        public DBC()
+        public DBC() 
         {
             Database.EnsureCreated();
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5104;Database=users;Username=postgres;Password=1;SSL Mode=Disable; Timeout = 1024");
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
+        { 
+            
+             optionsBuilder.UseNpgsql("Host=localhost;Port=5433;Database=users;Username=postgres;Password=1;SSL Mode=Disable; Timeout=1024"); 
+              
         }
+        
     }
 }

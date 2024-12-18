@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Linq;
 using AuthService;
 using AuthService.Database;
@@ -10,8 +11,10 @@ using Microsoft.OpenApi.Extensions;
 
 namespace Web.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
+
     public class UserController : ControllerBase
     {
         [HttpGet]
@@ -37,7 +40,7 @@ namespace Web.Controllers
             }
             return Ok(users);
         }
-
+        
         [HttpGet]
         [Route("GetByDesc")]
         public IActionResult GetByDesc([FromQuery][Required] string desc)
@@ -76,7 +79,7 @@ namespace Web.Controllers
                 user = dBC.users
                     .Where(x => x.id == index)
                     .Select(x => x.name)
-                    .First();
+                    .FirstOrDefault();
             };
             if (user == null) 
             {
@@ -143,8 +146,8 @@ namespace Web.Controllers
             }
             using(DBC dBC = new()) 
             {
-                var user = dBC.users.Find(name);
-                if(user == null) 
+                var user = dBC.users.FirstOrDefault(x => x.name == name);
+                if (user == null) 
                 {
                     return NotFound("No user found with the give name.");
                 }
@@ -196,6 +199,15 @@ namespace Web.Controllers
             }
             return Ok("User was deleted");
         }
-
+        [HttpPost]
+        [Route("Test")]
+        public IActionResult PostUser([FromQuery][Required] int number)
+        {
+            if (number <= 0) 
+            {
+                return BadRequest("Number must be greater than zero");
+            }
+            return Ok("Success test");
+        }
     }
 }
