@@ -7,12 +7,27 @@ namespace AuthService.Database;
 
 public class DBC : DbContext
 {
+    public DbContext context;
     public DbSet<User> users { get; set; } = null!;
 
     public DBC()
     {
-        NpgsqlConnection sqlConnection = new ();
-        sqlConnection.Open ();
+        var connectionString = "host=localhost port=5432 database=users username=postgres password=1 connect_timeout=10 sslmode=disable";
+        NpgsqlConnection sqlConnection = new NpgsqlConnection(connectionString);
+        try
+        {
+            sqlConnection.Open();
+        }
+        catch (Exception ex) 
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
+    { 
+        var connectionString = "Host=localhost;Port=5432; Database=users;Username=postgres;Password=1;Timeout=10;SslMode=Disable";
+        optionsBuilder.UseNpgsql(connectionString);
     }
 
 
