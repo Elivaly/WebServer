@@ -1,5 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using AuthService.Database;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Controllers
 {
@@ -7,19 +11,6 @@ namespace AuthService.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        [HttpGet]
-        [Route("GetName")]
-        public IActionResult GetName([FromQuery][Required] string name)
-        {
-            return Ok(name);
-        }
-
-        [HttpGet]
-        [Route("GetPassword")]
-        public IActionResult GetPassword([FromQuery][Required] string password)
-        {
-            return Ok(password);
-        }
 
         [HttpPost]
         [Route("Submit")]
@@ -30,6 +21,29 @@ namespace AuthService.Controllers
                 return BadRequest();
             }
             return Ok("Hello");
+        }
+
+        [HttpPost]
+        [Route("Generate JWT")]
+        public IActionResult Login([FromBody] User user)
+        { 
+            if (IsValidUser(user)) 
+            { 
+                var token = GenerateJwtToken();
+                return Ok(new { token });
+            } 
+            return Unauthorized(); 
+        } 
+        private string GenerateJwtToken() 
+        { 
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("yourSecretKey"));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken( issuer: "yourIssuer", audience: "yourAudience", expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        } 
+        private bool IsValidUser(User user) 
+        { 
+            return true;
         }
     }
 }

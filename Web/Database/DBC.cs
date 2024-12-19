@@ -13,17 +13,7 @@ public class DBC : DbContext
     {
         NpgsqlConnection sqlConnection = new ();
         sqlConnection.Open ();
-        NpgsqlCommand sqlCommand = new();
-        sqlCommand.Connection = sqlConnection;
-        sqlCommand.CommandType = CommandType.Text;
-        sqlCommand.CommandText = "SELECT * FROM users";
-        NpgsqlDataReader dataReader = sqlCommand.ExecuteReader ();
-        if (dataReader.HasRows) 
-        {
-            Database.EnsureCreatedAsync();
-        }
-        sqlCommand.Dispose();
-        sqlConnection.Close ();
-
     }
+
+
 }
