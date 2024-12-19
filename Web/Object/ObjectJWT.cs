@@ -1,4 +1,4 @@
-﻿namespace AuthService;
+﻿namespace AuthService.Object;
 
 public class ObjectJWT
 {

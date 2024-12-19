@@ -1,10 +1,11 @@
 ﻿using AuthService.Exceptions;
 using AuthService.Interface;
+using AuthService.Object;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
-namespace AuthService
+namespace AuthService.Services
 {
     public class JWTService(IConfiguration config) : IJWTInteraction
     {
@@ -20,7 +21,7 @@ namespace AuthService
 
             var userId = objectJWT.userId;
 
-            claims.Add(userIdClaimName,userId);
+            claims.Add(userIdClaimName, userId);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {

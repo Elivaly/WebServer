@@ -1,4 +1,6 @@
-﻿namespace AuthService.Interface;
+﻿using AuthService.Object;
+
+namespace AuthService.Interface;
 
 public interface IJWTInteraction
 {
