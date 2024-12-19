@@ -15,20 +15,6 @@ namespace AuthService.Controllers
     {
 
         private readonly IAuthorizationHandler _authorizationHandler = authorizationHandler;
-        /*
-        [HttpPost]
-        [Route("Submit")]
-        public async Task<IActionResult> Submit([FromBody][Required] string password)
-        {
-            if (string.IsNullOrEmpty(password)) 
-            {
-                return BadRequest();
-            }
-            string ip = HttpContext.Request.Headers["X-Forward-For"];
-            string appVersion = AppVersionService.getVersion();
-
-            return Ok(await _authorizationHandler.Submit());
-        }*/
 
         [HttpPost]
         [Route("GenerateJWT")]
