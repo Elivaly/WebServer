@@ -29,7 +29,7 @@ namespace Web.Controllers
             using (DBC db = new())
             {
                 users = db.users
-                    .Where(x => x.name == name)
+                    .Where(x => x.name.ToLower() == name.ToLower())
                     .Select(x => x.name)
                     .Distinct()
                     .ToList();
@@ -53,7 +53,7 @@ namespace Web.Controllers
             using (DBC db = new())
             {
                 users = db.users
-                    .Where(x => x.description == desc)
+                    .Where(x => x.description.ToLower() == desc.ToLower())
                     .Select(x => x.name)
                     .Distinct()
                     .ToList();
@@ -79,6 +79,7 @@ namespace Web.Controllers
                 user = db.users
                         .Where(x => x.id == index)
                         .Select(x => x.name)
+                        .Distinct()
                         .FirstOrDefault();
             }
             if (user == null) 
@@ -147,7 +148,7 @@ namespace Web.Controllers
             }
             using (DBC db = new())
             {
-                var user = db.users.FirstOrDefault(x => x.name == name);
+                var user = db.users.FirstOrDefault(x => x.name.ToLower() == name.ToLower());
                 if (user == null)
                 {
                     return NotFound("No user found with the give name.");
