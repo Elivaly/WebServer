@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,30 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = "yourAudience",
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"))
     };
+});
+builder.Services.AddSwaggerGen(options => 
+{ 
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme 
+    { 
+        In = ParameterLocation.Header, 
+        Description = "Please enter JWT with Bearer into field", 
+        Name = "Authorization", 
+        Type = SecuritySchemeType.ApiKey, 
+        Scheme = "Bearer" 
+    }); 
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement 
+    { 
+        {
+            new OpenApiSecurityScheme 
+            {
+                Reference = new OpenApiReference 
+                { 
+                    Type = ReferenceType.SecurityScheme, Id = "Bearer"
+                } 
+            },
+            new string[] { } 
+        } 
+    }); 
 });
 
 builder.Services.AddControllers();

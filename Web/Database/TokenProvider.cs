@@ -1,10 +1,6 @@
-﻿using System.Security.Claims;
-using System.Text;
+﻿using System.Text;
+using AuthService.Schems;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.JsonWebTokens;
-using System.IdentityModel.Tokens.Jwt;
-using AuthService.Handler;
-using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace AuthService.Handler;
 

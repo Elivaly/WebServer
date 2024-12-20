@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using AuthService.Forms;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

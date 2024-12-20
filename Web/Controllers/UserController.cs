@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using AuthService;
 using AuthService.Handler;
+using AuthService.Schems;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -214,7 +215,7 @@ namespace Web.Controllers
                 { 
                     return Conflict("User with such ID exists");
                 }
-                db.users.Add(user); 
+                db.users.Add(user);
                 db.SaveChanges(); 
             }
             return Ok("User was created");

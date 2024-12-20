@@ -2,11 +2,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using AuthService.Handler;
-using AuthService.Handler;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using BCrypt.Net;
+using AuthService.Schems;
 
 namespace AuthService.Controllers
 {
@@ -26,8 +26,6 @@ namespace AuthService.Controllers
                 { 
                     return Unauthorized("Invalid username or password"); 
                 }
-
-                // Добавление токена в cookies
                
                 var token = GenerateJwtToken();
 
