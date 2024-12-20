@@ -26,7 +26,7 @@ namespace AuthService.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Claims = claims,
-                Expires = DateTime.UtcNow.AddHours(double.Parse(_config["InnerSettings:JWT:JwtExpirationInHours"])),
+                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["InnerSettings:JWT:JwtExpirationInMinutes"])),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature),
