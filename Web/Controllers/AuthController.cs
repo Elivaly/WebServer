@@ -15,7 +15,8 @@ namespace AuthService.Controllers
     public class AuthController() : ControllerBase
     {
 
-        [HttpPost][Route("Login")] 
+        [HttpPost]
+        [Route("Login")] 
         public IActionResult Login([FromBody] User user) 
         {
             using(DBC db = new ()) 
@@ -34,6 +35,13 @@ namespace AuthService.Controllers
 
                 return Ok(new { token }); 
             }
+        }
+        [HttpPost]
+        [Route("Logout")]
+        public IActionResult Loguot() 
+        {
+            HttpContext.Response.Cookies.Delete("jwtToken"); 
+            return Ok(new { message = "User logged out successfully" }); 
         }
         private string GenerateJwtToken() 
         { 

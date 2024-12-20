@@ -8,6 +8,16 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Настройка CORS
+builder.Services.AddCors(options => 
+{ options.AddPolicy("AllowAll", builder => 
+    { 
+        builder.AllowAnyOrigin() 
+        .AllowAnyMethod() 
+        .AllowAnyHeader(); 
+    }); 
+});
+
 // Регистрация DbContext
 var connectionString = "Host=localhost;Port=5433;Database=users;Username=postgres;Password=1;Timeout=10;SslMode=Disable";
 builder.Services.AddDbContext<DBC>(options => options.UseNpgsql(connectionString));
@@ -44,12 +54,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+app.Run("http://0.0.0.0:5433");
 
