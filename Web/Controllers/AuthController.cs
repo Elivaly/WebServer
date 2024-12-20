@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using BCrypt.Net;
-using AuthService.Schems;
+using AuthService.Database;
 
 namespace AuthService.Controllers
 {

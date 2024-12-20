@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.Linq;
 using AuthService;
+using AuthService.Database;
 using AuthService.Handler;
-using AuthService.Schems;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
