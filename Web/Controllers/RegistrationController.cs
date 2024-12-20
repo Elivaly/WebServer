@@ -29,13 +29,12 @@ namespace AuthService.Controllers
                     return Conflict("User with such ID exists");
                 }
                 db.users.Add(user);
-
-                var token = GenerateJwtToken(existingUser);
-
-                HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
-
                 db.SaveChanges();
             }
+
+            var token = GenerateJwtToken(user);
+
+            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
 
             return Ok( new { message = "User registrated successfully"});
         }
