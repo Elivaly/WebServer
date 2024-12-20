@@ -18,16 +18,22 @@ namespace AuthService.Controllers
         [HttpPost][Route("Login")] 
         public IActionResult Login([FromBody] User user) 
         {
-            using (var db = new DBC()) 
+            using(DBC db = new ()) 
             { 
-                var existingUser = db.users.FirstOrDefault(u => u.name == user.name); 
-                if (existingUser == null || !BCrypt.Net.BCrypt.Verify(user.password, existingUser.password)) 
+                var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
+                if (existingUser == null || existingUser.password != user.password) 
                 { 
                     return Unauthorized("Invalid username or password"); 
                 }
-                var token = GenerateJwtToken(); 
+
+                // Добавление токена в cookies
+               
+                var token = GenerateJwtToken();
+
+                HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
+
                 return Ok(new { token }); 
-            } 
+            }
         }
         private string GenerateJwtToken() 
         { 
@@ -36,11 +42,6 @@ namespace AuthService.Controllers
             var token = new JwtSecurityToken( issuer: "yourIssuer", audience: "yourAudience", expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
         } 
-
-        private bool IsValidUser(User user) 
-        { 
-            return true;
-        }
 
     }
 }
