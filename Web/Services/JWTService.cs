@@ -69,5 +69,6 @@ namespace AuthService.Services
 
             return jwtObj;
         }
+
     }
 }

@@ -2,12 +2,13 @@
 using System.Diagnostics;
 using System.Linq;
 using AuthService;
-using AuthService.Database;
+using AuthService.Handler;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.OpenApi.Extensions;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
 namespace Web.Controllers
 {
@@ -42,10 +43,10 @@ namespace Web.Controllers
         }
         
         [HttpGet]
-        [Route("GetByDesc")]
-        public IActionResult GetByDesc([FromQuery][Required] string desc)
+        [Route("GetNamesByDesc")]
+        public IActionResult GetNamesByDesc([FromQuery][Required] string description)
         {
-            if (string.IsNullOrEmpty(desc)) 
+            if (string.IsNullOrEmpty(description)) 
             { 
                 return BadRequest("Description is required."); 
             }
@@ -53,7 +54,7 @@ namespace Web.Controllers
             using (DBC db = new())
             {
                 users = db.users
-                    .Where(x => x.description.ToLower() == desc.ToLower())
+                    .Where(x => x.description.ToLower() == description.ToLower())
                     .Select(x => x.name)
                     .Distinct()
                     .ToList();
@@ -66,8 +67,8 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        [Route("GetByIndex")]
-        public IActionResult GetByIndex([FromQuery][Required] int index) 
+        [Route("GetNamesByIndex")]
+        public IActionResult GetNamesByIndex([FromQuery][Required] int index) 
         {
             string user;
             if(index <= 0) 
@@ -93,17 +94,14 @@ namespace Web.Controllers
         [Route("GetAllUsers")]
         public IActionResult GetAllUsers()
         {
-            List<string> users = new List<string>();
-            using (DBC db = new())
-            {
-                users = db.users
-                        .Select(x => x.name)
-                        .Distinct()
-                        .ToList();
+            List<User> users = new List<User>(); 
+            using (DBC db = new()) 
+            { 
+                users = db.users.OrderBy(x => x.id).ToList(); 
             }
-            if(users == null || users.Count == 0) 
+            if (users == null || users.Count == 0)
             {
-                return NotFound("No users found");
+                return NotFound("No users found"); 
             }
             return Ok(users);
         }
@@ -135,29 +133,28 @@ namespace Web.Controllers
         }
 
         [HttpPut]
-        [Route("UpdatePasswordByName")]
-        public IActionResult UpdatePasswordByname([FromQuery][Required] string name, [FromQuery][Required] string newPassword) 
+        [Route("UpdateDescriptionById")]
+        public IActionResult UpdateDescriptionById([FromQuery][Required] int id, [FromQuery][Required] string newDescription) 
         {
-            if (string.IsNullOrEmpty(name)) 
+            if (string.IsNullOrEmpty(newDescription)) 
             {
-                return BadRequest("Name is required.");
+                return BadRequest("Description is required");
             }
-            if (string.IsNullOrEmpty(newPassword))
+            if(id < 0) 
             {
-                return BadRequest("Password is required.");
+                return BadRequest("Id should be greater than zero");
             }
-            using (DBC db = new())
+            using(DBC db = new()) 
             {
-                var user = db.users.FirstOrDefault(x => x.name.ToLower() == name.ToLower());
-                if (user == null)
+                var user = db.users.FirstOrDefault(x => x.id == id);
+                if(user == null) 
                 {
-                    return NotFound("No user found with the give name.");
+                    return NotFound("No user foud with the given id");
                 }
-                user.password = newPassword;
+                user.description = newDescription;
                 db.SaveChanges();
             }
-            return Ok("Password was changed");
-
+            return Ok("Description was changed");
         }
 
         [HttpDelete]
@@ -201,25 +198,24 @@ namespace Web.Controllers
             }
             return Ok("User was deleted");
         }
-
-        [HttpPost]
-        [Route("Test")]
-        public IActionResult PostUser([FromQuery][Required] int number)
-        {
-            if (number <= 0) 
-            {
-                return BadRequest("Number must be greater than zero");
-            }
-            return Ok("Success test");
-        }
         
         [HttpPost]
         [Route("AddUser")]
-        public IActionResult AddUser([FromQuery][Required] string name, [FromQuery][Required] string password, [FromQuery][Required] string desc) 
+        public IActionResult AddUser([FromBody][Required] User user) 
         {
-            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(desc))
+            if (user.id <= 0) 
+            { 
+                return BadRequest("Id must be greater than zero");
+            }
+            using (var db = new DBC()) 
             {
-                return BadRequest("Data is required.");
+                var existingUser = db.users.FirstOrDefault(u => u.id == user.id);
+                if (existingUser != null) 
+                { 
+                    return Conflict("User with such ID exists");
+                }
+                db.users.Add(user); 
+                db.SaveChanges(); 
             }
             return Ok("User was created");
         }

@@ -1,6 +1,19 @@
-﻿namespace AuthService.Database
+﻿namespace AuthService.Handler
 {
-    public class Token
+
+    public class Token 
     {
+        public Token() 
+        { 
+        
+        }
+        public void SecretTokenDescriptor() 
+        {
+            
+        }
+    }
+    public class SecretTokenDescriptor 
+    {
+    
     }
 }

@@ -1,10 +1,9 @@
-﻿//using AuthService.Attribute;
-using Microsoft.OpenApi.Any;
+﻿using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace AuthService.Filter;
-/*
+
 public class HeadersfFilter(IConfiguration config) : IOperationFilter
 {
     private readonly IConfiguration _config = config;
@@ -43,4 +42,3 @@ public class HeadersfFilter(IConfiguration config) : IOperationFilter
         }
     }
 }
-*/

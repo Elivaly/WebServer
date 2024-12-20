@@ -3,7 +3,7 @@ using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace AuthService.Database;
+namespace AuthService.Handler;
 
 public class DBC : DbContext
 {
@@ -19,6 +19,20 @@ public class DBC : DbContext
             sqlConnection.Open();
         }
         catch (Exception ex) 
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    public DBC(DbContextOptions<DBC> options) : base(options) 
+    {
+        var connectionString = "host=localhost port=5432 database=users username=postgres password=1 connect_timeout=10 sslmode=disable";
+        NpgsqlConnection sqlConnection = new NpgsqlConnection(connectionString);
+        try
+        {
+            sqlConnection.Open();
+        }
+        catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
         }

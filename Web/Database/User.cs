@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AuthService.Database
+namespace AuthService.Handler
 {
     public class User
     {
