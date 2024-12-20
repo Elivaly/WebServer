@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using AuthService.Database;
+using AuthService.Schems;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Handler;

@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.Linq;
 using AuthService;
-using AuthService.Database;
 using AuthService.Handler;
+using AuthService.Schems;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -40,12 +40,12 @@ namespace Web.Controllers
             {
                 return NotFound("No users found with given name");
             }
-            return Ok(users);
+            return Ok( new { Users = users});
         }
         
         [HttpGet]
-        [Route("GetNamesByDesc")]
-        public IActionResult GetNamesByDesc([FromQuery][Required] string description)
+        [Route("GetNamesByDescription")]
+        public IActionResult GetNamesByDescription([FromQuery][Required] string description)
         {
             if (string.IsNullOrEmpty(description)) 
             { 
@@ -64,12 +64,12 @@ namespace Web.Controllers
             {
                 return NotFound("No users found with given description");
             }
-            return Ok(users);
+            return Ok(new { Users = users });
         }
 
         [HttpGet]
-        [Route("GetNamesByIndex")]
-        public IActionResult GetNamesByIndex([FromQuery][Required] int index) 
+        [Route("GetNameByIndex")]
+        public IActionResult GetNameByIndex([FromQuery][Required] int index) 
         {
             string user;
             if(index <= 0) 
@@ -88,7 +88,7 @@ namespace Web.Controllers
             {
                 return NotFound("No user with given index");
             }
-            return Ok(user);
+            return Ok( new { Name = user });
         }
 
         [HttpGet]
@@ -104,7 +104,7 @@ namespace Web.Controllers
             {
                 return NotFound("No users found"); 
             }
-            return Ok(users);
+            return Ok( new { Users =  users });
         }
 
         [HttpPut]
@@ -130,7 +130,7 @@ namespace Web.Controllers
                 db.SaveChanges();
             }
 
-            return Ok("Password was changed");
+            return Ok( new {message =  "Password was changed"});
         }
 
         [HttpPut]
@@ -155,7 +155,7 @@ namespace Web.Controllers
                 user.description = newDescription;
                 db.SaveChanges();
             }
-            return Ok("Description was changed");
+            return Ok(new { message =  "Description was changed" });
         }
 
         [HttpDelete]
@@ -176,49 +176,8 @@ namespace Web.Controllers
                 db.users.Remove(user);
                 db.SaveChanges();
             }
-            return Ok("User was deleted");
+            return Ok( new { message = "User was deleted" });
         }
 
-        [HttpDelete]
-        [Route("DeleteUserByName")]
-        public IActionResult DeleteUserByName([FromQuery][Required] string name) 
-        {
-            if (string.IsNullOrEmpty(name)) 
-            {
-                return BadRequest("Name is required");
-            }
-            using (DBC db = new())
-            {
-                var user = db.users.FirstOrDefault(x => x.name == name);
-                if (user == null)
-                {
-                    return NotFound("No user with the given name.");
-                }
-                db.users.Remove(user);
-                db.SaveChanges();
-            }
-            return Ok("User was deleted");
-        }
-        
-        [HttpPost]
-        [Route("AddUser")]
-        public IActionResult AddUser([FromBody][Required] User user) 
-        {
-            if (user.id <= 0) 
-            { 
-                return BadRequest("Id must be greater than zero");
-            }
-            using (var db = new DBC()) 
-            {
-                var existingUser = db.users.FirstOrDefault(u => u.id == user.id);
-                if (existingUser != null) 
-                { 
-                    return Conflict("User with such ID exists");
-                }
-                db.users.Add(user);
-                db.SaveChanges(); 
-            }
-            return Ok("User was created");
-        }
     }
 }
