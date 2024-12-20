@@ -6,10 +6,6 @@ namespace AuthService.Handler
     {
         public string Secret { get; set; }
         public string Token { get; set; }
-        public string Type { get; set; }
-        public string TypeId { get; set; } = string.Empty;
-        public string TypeName { get; set; } = string.Empty;
-        public string TypeValue { get; set; } = string.Empty;
         public SecretTokenDescriptor()
         {
             var token = Token;

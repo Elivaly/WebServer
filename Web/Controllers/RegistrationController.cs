@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using AuthService.Handler;
 using AuthService.Schems;
@@ -29,7 +30,7 @@ namespace AuthService.Controllers
                 }
                 db.users.Add(user);
 
-                var token = GenerateJwtToken();
+                var token = GenerateJwtToken(existingUser);
 
                 HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
 
@@ -38,11 +39,22 @@ namespace AuthService.Controllers
 
             return Ok( new { message = "User registrated successfully"});
         }
-        private string GenerateJwtToken()
+        private string GenerateJwtToken(User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(issuer: "yourIssuer", audience: "yourAudience", expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.name),
+                new Claim("role", user.description),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+            var token = new JwtSecurityToken(
+                issuer: "yourIssuer",
+                audience: "yourAudience",
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 

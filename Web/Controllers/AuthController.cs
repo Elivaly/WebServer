@@ -28,7 +28,7 @@ namespace AuthService.Controllers
                     return Unauthorized("Invalid username or password"); 
                 }
                
-                var token = GenerateJwtToken();
+                var token = GenerateJwtToken(existingUser);
 
                 HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
 
@@ -42,6 +42,7 @@ namespace AuthService.Controllers
             HttpContext.Response.Cookies.Delete("jwtToken"); 
             return Ok(new { message = "User logged out successfully" }); 
         }
+
         [HttpPost]
         [Route("RefreshTokenTime")]
         public IActionResult RefreshTokenTime() 
@@ -60,19 +61,35 @@ namespace AuthService.Controllers
             HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
             return Ok(new { token = newToken });
         }
-        private string GenerateJwtToken() 
-        { 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken( issuer: "yourIssuer", audience: "yourAudience", expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
         private string GenerateJwtToken(ClaimsPrincipal data)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(issuer: "yourIssuer", audience: "yourAudience", expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
+            var token = new JwtSecurityToken(
+                issuer: "yourIssuer",
+                audience: "yourAudience", 
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateJwtToken(User user)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
+            var claims = new[] 
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.name),
+                new Claim("role", user.description), 
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+            var token = new JwtSecurityToken( 
+                issuer: "yourIssuer", 
+                audience: "yourAudience", 
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: credentials); 
+            return new JwtSecurityTokenHandler().WriteToken(token); 
         }
 
         private ClaimsPrincipal GetDataFromExpiredToken(string token)
