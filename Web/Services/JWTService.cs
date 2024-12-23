@@ -14,7 +14,7 @@ namespace AuthService.Services
 
         public string GenerateToken(ObjectJWT objectJWT)
         {
-            var secret = _config["InnerSettings:JWT:Secret"];
+            var secret = _config["InnerSettings:JWT:Secret"]; // дока нет
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(secret);
             var claims = new Dictionary<string, object>();
@@ -26,7 +26,7 @@ namespace AuthService.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Claims = claims,
-                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["InnerSettings:JWT:JwtExpirationInMinutes"])),
+                Expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["InnerSettings:JWT:JwtExpirationInMinutes"])),// тут нет такого дока надо переделать
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature),
@@ -42,7 +42,7 @@ namespace AuthService.Services
             if (string.IsNullOrEmpty(token))
                 throw new CustomExceptions.JWTIsEmpty();
 
-            var secret = _config["InnerSettings:JWT:Secret"];
+            var secret = _config["InnerSettings:JWT:Secret"]; // дока нет
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(secret);
 
@@ -56,7 +56,7 @@ namespace AuthService.Services
                     ValidateAudience = false,
 
                     // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
-                    ClockSkew = TimeSpan.FromSeconds(int.Parse(_config["InnerSettings:JWT:JwtDelayDuringVerificationInSeconds"]))
+                    ClockSkew = TimeSpan.FromSeconds(int.Parse(_config["InnerSettings:JWT:JwtDelayDuringVerificationInSeconds"])) // дока нет
                 },
                 out SecurityToken validatedToken);
             var jwtToken = (JwtSecurityToken)validatedToken;
