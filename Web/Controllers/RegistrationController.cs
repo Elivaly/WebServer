@@ -6,6 +6,7 @@ using AuthService.Handler;
 using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 
 namespace AuthService.Controllers
 {
@@ -21,18 +22,19 @@ namespace AuthService.Controllers
 
         [HttpPost]
         [Route("Registration")]
-        public IActionResult Registration([FromBody][Required] User user) 
+        public IActionResult Registration([FromBody][Required] User user)  
         {
             using (var db = new DBC(_configuration))
             {
-                var existingUser = db.users.FirstOrDefault(u => u.id == user.id);
+                var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
+
                 if (existingUser != null)
                 {
                     return Conflict("User exists");
                 }
                 db.users.Add(user);
                 db.SaveChanges();
-            }
+            };
 
             var token = GenerateJwtToken(user);
 
@@ -42,7 +44,7 @@ namespace AuthService.Controllers
         }
         private string GenerateJwtToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {

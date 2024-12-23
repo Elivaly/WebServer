@@ -75,7 +75,8 @@ builder.Services.AddSwaggerGen(c =>
         Title = "AuthorizationService", 
         Version = "v1.0",
         Description = "ѕроект представл€ет собой сервис дл€ авторизации и переавторизации пользовател€"
-    }); 
+    });
+    c.EnableAnnotations();
 });
 
 builder.Services.AddControllers();
@@ -99,7 +100,5 @@ app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.MapControllers();
 
-var ca = builder.Configuration["ApplicationHost:Address"];
-
-app.Run("http://192.168.5.32:5433");
+app.Run(builder.Configuration["ApplicationHost:Address"]);
 

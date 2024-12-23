@@ -13,7 +13,7 @@ namespace AuthService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController() : ControllerBase
+    public class AuthController : ControllerBase
     {
         IConfiguration _configuration;
 
@@ -71,7 +71,7 @@ namespace AuthService.Controllers
         }
         private string GenerateJwtToken(ClaimsPrincipal data)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
                 issuer: "yourIssuer",
