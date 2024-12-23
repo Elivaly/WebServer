@@ -15,28 +15,32 @@ public class DBC : DbContext
     {
         var connectionString = "host=localhost port=5432 database=users username=postgres password=1 connect_timeout=10 sslmode=disable";
         NpgsqlConnection sqlConnection = new NpgsqlConnection(connectionString);
-        try
-        {
-            sqlConnection.Open();
-        }
-        catch (Exception ex) 
-        {
-            Console.WriteLine(ex.Message);
-        }
+
+        //sqlConnection.Open();
     }
+      
 
     public DBC(DbContextOptions<DBC> options) : base(options) 
     {
         var connectionString = "host=localhost port=5432 database=users username=postgres password=1 connect_timeout=10 sslmode=disable";
         NpgsqlConnection sqlConnection = new NpgsqlConnection(connectionString);
-        try
+       
+        sqlConnection.Open();
+
+        using (var command = new NpgsqlCommand("SELECT * FROM users", sqlConnection))
         {
-            sqlConnection.Open();
+            using (var read = command.ExecuteReader())
+            {
+                while (read.Read())
+                {
+                    var userId = read.GetInt32(0);
+                    var userName = read.GetString(1);
+                    Console.WriteLine($"User ID: {userId}, User Name: {userName}");
+                }
+            }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+        sqlConnection.Close();
+      
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
@@ -44,6 +48,4 @@ public class DBC : DbContext
         var connectionString = "Host=localhost;Port=5432; Database=users;Username=postgres;Password=1;Timeout=10;SslMode=Disable";
         optionsBuilder.UseNpgsql(connectionString);
     }
-
-
 }
