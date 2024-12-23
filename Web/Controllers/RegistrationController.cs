@@ -62,7 +62,6 @@ namespace AuthService.Controllers
             {
                 throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
             }
-            Console.WriteLine($"JWT Key: {key}"); 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
