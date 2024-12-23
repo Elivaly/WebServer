@@ -24,13 +24,26 @@ builder.Services.AddCors(options =>
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
 builder.Services.AddDbContext<DBC>(options => options.UseNpgsql(connectionString));
 
+// Попытка вернуть куки
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+    options.CheckConsentNeeded = context => true;
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+});
+
+var key = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(key))
+{ 
+    throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty."); 
+}
+
 // Добавление аутентификации и JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -41,7 +54,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = "yourIssuer",
         ValidAudience = "yourAudience",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
     };
 });
 builder.Services.AddSwaggerGen(options => 
@@ -85,11 +98,9 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+
+app.UseSwaggerUI();
 
 app.UseCors("AllowAll");
 
@@ -97,7 +108,6 @@ app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.MapControllers();
 
 app.Run(builder.Configuration["ApplicationHost:Address"]);

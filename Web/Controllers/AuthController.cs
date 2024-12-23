@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using BCrypt.Net;
 using AuthService.Schems;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Localization;
+using System.Text.RegularExpressions;
 
 namespace AuthService.Controllers
 {
@@ -28,7 +30,17 @@ namespace AuthService.Controllers
         [Route("Login")] 
         public IActionResult Login([FromBody] User user) 
         {
-            using(DBC db = new (_configuration)) 
+
+            // Проверка доступности HttpContext
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+            using (DBC db = new (_configuration)) 
             { 
                 var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
                 if (existingUser == null || existingUser.password != user.password) 
@@ -38,7 +50,7 @@ namespace AuthService.Controllers
                
                 var token = GenerateJwtToken(existingUser);
 
-                HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
+                HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
 
                 return Ok(new { token }); 
             }
@@ -83,7 +95,7 @@ namespace AuthService.Controllers
 
         private string GenerateJwtToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
             var claims = new[] 
             {
@@ -92,8 +104,8 @@ namespace AuthService.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             var token = new JwtSecurityToken( 
-                issuer: "yourIssuer", 
-                audience: "yourAudience", 
+                issuer: _configuration["JWT:Issuer"],
+                audience: _configuration["JWT:Audience"],
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: credentials); 
@@ -110,7 +122,7 @@ namespace AuthService.Controllers
                 ValidateIssuerSigningKey = true, 
                 ValidIssuer = "yourIssuer",
                 ValidAudience = "yourAudience", 
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey")) 
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"])) 
             }; 
             var tokenHandler = new JwtSecurityTokenHandler(); 
             var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken); 
