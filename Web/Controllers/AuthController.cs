@@ -87,8 +87,8 @@ namespace AuthService.Controllers
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
-                issuer: "yourIssuer",
-                audience: "yourAudience", 
+                issuer: _configuration["JWT:Issuer"],
+                audience: _configuration["JWT:Audience"],
                 expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
