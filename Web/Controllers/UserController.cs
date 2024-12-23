@@ -19,6 +19,12 @@ namespace Web.Controllers
 
     public class UserController : ControllerBase
     {
+        IConfiguration _configuration;
+
+        public UserController(IConfiguration configuration) 
+        {
+            _configuration = configuration;
+        }
         [HttpGet]
         [Route("GetByName")]
         public IActionResult GetByName([FromQuery][Required] string name) 
@@ -28,7 +34,7 @@ namespace Web.Controllers
                 return BadRequest("Name is required."); 
             }
             List<string> users = new List<string>();
-            using (DBC db = new())
+            using (DBC db = new(_configuration))
             {
                 users = db.users
                     .Where(x => x.name.ToLower() == name.ToLower())
@@ -52,7 +58,7 @@ namespace Web.Controllers
                 return BadRequest("Description is required."); 
             }
             List <string> users = new List<string>();
-            using (DBC db = new())
+            using (DBC db = new(_configuration))
             {
                 users = db.users
                     .Where(x => x.description.ToLower() == description.ToLower())
@@ -76,7 +82,7 @@ namespace Web.Controllers
             {
                 return BadRequest("Index must be greater than zero");
             }
-            using (DBC db = new())
+            using (DBC db = new(_configuration))
             {
                 user = db.users
                         .Where(x => x.id == index)
@@ -96,7 +102,7 @@ namespace Web.Controllers
         public IActionResult GetAllUsers()
         {
             List<User> users = new List<User>(); 
-            using (DBC db = new()) 
+            using (DBC db = new(_configuration)) 
             { 
                 users = db.users.OrderBy(x => x.id).ToList(); 
             }
@@ -119,7 +125,7 @@ namespace Web.Controllers
             { 
                 return BadRequest("New password is required."); 
             }
-            using (DBC db = new())
+            using (DBC db = new(_configuration))
             {
                 var user = db.users.FirstOrDefault(x => x.id == index);
                 if (user == null)
@@ -145,7 +151,7 @@ namespace Web.Controllers
             {
                 return BadRequest("Id should be greater than zero");
             }
-            using(DBC db = new()) 
+            using(DBC db = new(_configuration)) 
             {
                 var user = db.users.FirstOrDefault(x => x.id == id);
                 if(user == null) 
@@ -166,7 +172,7 @@ namespace Web.Controllers
             {
                 return BadRequest("Index must be greater than zero");
             }
-            using (DBC db = new())
+            using (DBC db = new(_configuration))
             {
                 var user = db.users.FirstOrDefault(x => x.id == index);
                 if (user == null)

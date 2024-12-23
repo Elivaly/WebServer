@@ -13,20 +13,22 @@ namespace AuthService.Controllers
     [ApiController]
     public class RegistrationController : ControllerBase
     {
+        IConfiguration _configuration;
+        public RegistrationController(IConfiguration configuration) 
+        {
+            _configuration = configuration;
+        }
+
         [HttpPost]
         [Route("Registration")]
         public IActionResult Registration([FromBody][Required] User user) 
         {
-            if (user.id <= 0)
-            {
-                return BadRequest("Id must be greater than zero");
-            }
-            using (var db = new DBC())
+            using (var db = new DBC(_configuration))
             {
                 var existingUser = db.users.FirstOrDefault(u => u.id == user.id);
                 if (existingUser != null)
                 {
-                    return Conflict("User with such ID exists");
+                    return Conflict("User exists");
                 }
                 db.users.Add(user);
                 db.SaveChanges();

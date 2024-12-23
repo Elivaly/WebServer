@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
 });
 
 // Регистрация DbContext
-var connectionString = "Host=localhost;Port=5432;Database=users;Username=postgres;Password=1;Timeout=10;SslMode=Disable";
+var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
 builder.Services.AddDbContext<DBC>(options => options.UseNpgsql(connectionString));
 
 // Добавление аутентификации и JWT
@@ -30,6 +30,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -40,7 +41,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = "yourIssuer",
         ValidAudience = "yourAudience",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verysecretverysecretverysecretkeykeykey"))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
     };
 });
 builder.Services.AddSwaggerGen(options => 
@@ -98,5 +99,7 @@ app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.MapControllers();
 
-app.Run("http://localhost:5433");
+var ca = builder.Configuration["ApplicationHost:Address"];
+
+app.Run("http://192.168.5.32:5433");
 

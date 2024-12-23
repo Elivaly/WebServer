@@ -15,12 +15,20 @@ namespace AuthService.Controllers
     [ApiController]
     public class AuthController() : ControllerBase
     {
+        IConfiguration _configuration;
+
+        public AuthController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+            
+        }
+        
 
         [HttpPost]
         [Route("Login")] 
         public IActionResult Login([FromBody] User user) 
         {
-            using(DBC db = new ()) 
+            using(DBC db = new (_configuration)) 
             { 
                 var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
                 if (existingUser == null || existingUser.password != user.password) 
