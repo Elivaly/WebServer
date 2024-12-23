@@ -50,9 +50,10 @@ namespace AuthService.Controllers
                
                 var token = GenerateJwtToken(existingUser);
 
-                HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
+                HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
 
-                return Ok(new { token }); 
+                //return Ok(new { token });
+                return Ok(new { message = "Hello user!"});
             }
         }
         [HttpPost]
@@ -78,7 +79,7 @@ namespace AuthService.Controllers
                 return Unauthorized("Invalid token"); 
             }
             var newToken = GenerateJwtToken(data);
-            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
+            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
             return Ok(new { token = newToken });
         }
         private string GenerateJwtToken(ClaimsPrincipal data)

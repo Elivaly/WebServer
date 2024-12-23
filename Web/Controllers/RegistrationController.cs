@@ -49,7 +49,7 @@ namespace AuthService.Controllers
 
             var token = GenerateJwtToken(user);
 
-            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
+            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
 
             return Ok(new { message = "User registrated successfully" });
 
