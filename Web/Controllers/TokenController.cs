@@ -32,10 +32,10 @@ namespace AuthService.Controllers
 
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token); 
-            var username = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
-            var role = jwtToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value; 
-            var expiration = jwtToken.ValidTo; 
-            return Ok(new { Name = username, Role = role, Exp = expiration});
+            var expiration = jwtToken.ValidTo;
+            var audience = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Aud)?.Value;
+            var issuer = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Iss)?.Value;
+            return Ok(new { Exp = expiration, Audience = audience, Issuer = issuer});
         }
 
         [HttpGet]
