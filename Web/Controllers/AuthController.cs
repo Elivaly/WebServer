@@ -121,8 +121,8 @@ namespace AuthService.Controllers
                 ValidateAudience = true,
                 ValidateLifetime = false,
                 ValidateIssuerSigningKey = true, 
-                ValidIssuer = "yourIssuer",
-                ValidAudience = "yourAudience", 
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"], 
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"])) 
             }; 
             var tokenHandler = new JwtSecurityTokenHandler(); 

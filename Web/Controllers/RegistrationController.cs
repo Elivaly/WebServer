@@ -68,7 +68,12 @@ namespace AuthService.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.name), new Claim("role", user.description), new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
-            var token = new JwtSecurityToken(issuer: _configuration["JWT:Issuer"], audience: _configuration["JWT:Audience"], claims: claims, expires: DateTime.Now.AddMinutes(30), signingCredentials: credentials);
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JWT:Issuer"],
+                audience: _configuration["JWT:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
 
         }
