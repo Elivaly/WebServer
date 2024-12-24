@@ -66,7 +66,9 @@ namespace AuthService.Controllers
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.name), new Claim("role", user.description), new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Sub, user.name), 
+                new Claim("role", user.description), 
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],

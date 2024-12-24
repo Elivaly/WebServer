@@ -10,6 +10,7 @@ using AuthService.Schems;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Localization;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace AuthService.Controllers
 {
@@ -24,7 +25,6 @@ namespace AuthService.Controllers
             _configuration = configuration;
             
         }
-        
 
         [HttpPost]
         [Route("Login")] 
@@ -52,46 +52,16 @@ namespace AuthService.Controllers
 
                 HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
 
-                //return Ok(new { token });
-                return Ok(new { message = "Hello user!"});
+                return Ok(new { token = token});
             }
         }
+
         [HttpPost]
         [Route("Logout")]
         public IActionResult Loguot() 
         {
             HttpContext.Response.Cookies.Delete("jwtToken"); 
             return Ok(new { message = "User logged out successfully" }); 
-        }
-
-        [HttpPost]
-        [Route("RefreshTokenTime")]
-        public IActionResult RefreshTokenTime() 
-        {
-            var token = HttpContext.Request.Cookies["jwtToken"]; 
-            if (string.IsNullOrEmpty(token))
-            { 
-                return Unauthorized("Token is missing");
-            }
-            var data = GetDataFromExpiredToken(token);
-            if (data == null) 
-            {
-                return Unauthorized("Invalid token"); 
-            }
-            var newToken = GenerateJwtToken(data);
-            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
-            return Ok(new { token = newToken });
-        }
-        private string GenerateJwtToken(ClaimsPrincipal data)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:Issuer"],
-                audience: _configuration["JWT:Audience"],
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: credentials);
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         private string GenerateJwtToken(User user)
@@ -112,28 +82,5 @@ namespace AuthService.Controllers
                 signingCredentials: credentials); 
             return new JwtSecurityTokenHandler().WriteToken(token); 
         }
-
-        private ClaimsPrincipal GetDataFromExpiredToken(string token)
-        {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = false,
-                ValidateIssuerSigningKey = true, 
-                ValidIssuer = _configuration["JWT:Issuer"],
-                ValidAudience = _configuration["JWT:Audience"], 
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"])) 
-            }; 
-            var tokenHandler = new JwtSecurityTokenHandler(); 
-            var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken); 
-            var jwtToken = securityToken as JwtSecurityToken; 
-            if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase)) 
-            { 
-                throw new SecurityTokenException("Invalid token"); 
-            } 
-            return data; 
-        }
-
     }
 }
