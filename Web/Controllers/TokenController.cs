@@ -14,7 +14,7 @@ namespace AuthService.Controllers
     public class TokenController : ControllerBase
     {
         IConfiguration _configuration;
-
+        
         public TokenController(IConfiguration configuration) 
         {
             _configuration = configuration;
@@ -29,7 +29,6 @@ namespace AuthService.Controllers
             {
                 return BadRequest("Token is missing");
             }
-
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token); 
             var expiration = jwtToken.ValidTo;
@@ -58,7 +57,7 @@ namespace AuthService.Controllers
         [Route("RefreshTokenTime")]
         public IActionResult RefreshTokenTime()
         {
-            var token = HttpContext.Request.Cookies["jwtToken"];
+            var token = _configuration["JWT:Token"];
             if (string.IsNullOrEmpty(token))
             {
                 return Unauthorized("Token is missing");
@@ -69,6 +68,7 @@ namespace AuthService.Controllers
                 return Unauthorized("Invalid token");
             }
             var newToken = GenerateJwtToken(data);
+            _configuration["JWT:Token"] = token;
             HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(3) });
             return Ok(new { token });
         }

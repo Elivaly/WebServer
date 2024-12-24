@@ -49,6 +49,7 @@ namespace AuthService.Controllers
                 }
                
                 var token = GenerateJwtToken(existingUser);
+                _configuration["JWT:Token"]=token;
 
                 HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(3) });
 
@@ -60,7 +61,8 @@ namespace AuthService.Controllers
         [Route("Logout")]
         public IActionResult Loguot() 
         {
-            HttpContext.Response.Cookies.Delete("jwtToken"); 
+            HttpContext.Response.Cookies.Delete("jwtToken");
+            _configuration["JWT:Token"] = null;
             return Ok(new { message = "User logged out successfully" }); 
         }
 
