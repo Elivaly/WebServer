@@ -2,7 +2,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -57,59 +56,57 @@ namespace AuthService.Controllers
 
         [HttpPost]
         [Route("RefreshTokenTime")]
-        public IActionResult RefreshTokenTime([FromBody][Required] User user)
+        public IActionResult RefreshTokenTime()
         {
             var token = HttpContext.Request.Cookies["jwtToken"];
             if (string.IsNullOrEmpty(token))
             {
                 return Unauthorized("Token is missing");
             }
-            var newToken = GenerateJwtToken(user);
-            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(30) });
-            return Ok(new { message = "Token was refreshed succcessfully" });
+            var data = GetDataFromExpiredToken(token);
+            if (data == null)
+            {
+                return Unauthorized("Invalid token");
+            }
+            var newToken = GenerateJwtToken(data);
+            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(3) });
+            return Ok(new { token });
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(ClaimsPrincipal data)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.name),
-                new Claim("role", user.description),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],
                 audience: _configuration["JWT:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddMinutes(3),
                 signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        /*
+
         private ClaimsPrincipal GetDataFromExpiredToken(string token)
-        { 
+        {
             var tokenValidationParameters = new TokenValidationParameters
-            { 
-                ValidateIssuer = true, 
-                ValidateAudience = true, 
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
                 ValidateLifetime = false,
-                ValidateIssuerSigningKey = true, 
-                ValidIssuer = _configuration["JWT:Issuer"], 
-                ValidAudience = _configuration["JWT:Audience"], 
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"])) 
-            }; 
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]))
+            };
             var tokenHandler = new JwtSecurityTokenHandler();
             var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            var jwtToken = securityToken as JwtSecurityToken; 
+            var jwtToken = securityToken as JwtSecurityToken;
             if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            { 
-                throw new SecurityTokenException("Invalid token"); 
+            {
+                throw new SecurityTokenException("Invalid token");
             }
             return data;
         }
-        */
-        
+
+
     }
 }
