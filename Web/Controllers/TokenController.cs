@@ -21,7 +21,7 @@ namespace AuthService.Controllers
         {
             _configuration = configuration;
         }
-
+        /*
         [HttpGet]
         [Route("CheckTokens")]
         public ActionResult TokensCheck() 
@@ -31,6 +31,10 @@ namespace AuthService.Controllers
             {
                 message = "Токены одинаковые";
             }
+            else if (_configuration["JWT:Token"] == "" && HttpContext.Request.Cookies["jwtToken"] == null)
+            {
+                message = "Токены не существуют";
+            }
             else
             {
                 message = "Токены разные";
@@ -38,7 +42,7 @@ namespace AuthService.Controllers
             return Ok(message);
         }
 
-
+        */
         [HttpGet]
         [Route("DecodeToken")]
         public IActionResult DecodeToken()
