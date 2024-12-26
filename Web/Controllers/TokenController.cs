@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -24,7 +26,7 @@ namespace AuthService.Controllers
         [Route("DecodeToken")]
         public IActionResult DecodeToken()
         {
-            var token = HttpContext.Request.Cookies["jwtToken"];
+            var token = _configuration["JWT:Token"];
             if (token == null) 
             {
                 return BadRequest("Token is missing");
@@ -34,7 +36,9 @@ namespace AuthService.Controllers
             var expiration = jwtToken.ValidTo;
             var audience = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Aud)?.Value;
             var issuer = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Iss)?.Value;
-            return Ok(new { Exp = expiration, Audience = audience, Issuer = issuer});
+            var username = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+            var role = jwtToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+            return Ok(new { Exp = expiration, Audience = audience, Issuer = issuer, Username = username, Role = role});
         }
 
         [HttpGet]
@@ -52,7 +56,7 @@ namespace AuthService.Controllers
             var timeRemaining = expiration - DateTime.UtcNow;
             return Ok(new { expiration, timeRemaining });
         }
-
+        
         [HttpPost]
         [Route("RefreshTokenTime")]
         public IActionResult RefreshTokenTime()
@@ -62,7 +66,7 @@ namespace AuthService.Controllers
             {
                 return Unauthorized("Token is missing");
             }
-            var data = GetDataFromExpiredToken(token);
+            var data = GetDataFromExpiredToken(_configuration["JWT:Token"]);
             if (data == null)
             {
                 return Unauthorized("Invalid token");
@@ -72,15 +76,17 @@ namespace AuthService.Controllers
             HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(3) });
             return Ok(new { token });
         }
-
+        
         private string GenerateJwtToken(ClaimsPrincipal data)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var claims = data.Claims.ToList();
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],
                 audience: _configuration["JWT:Audience"],
                 expires: DateTime.Now.AddMinutes(3),
+                claims: claims,
                 signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
@@ -99,6 +105,11 @@ namespace AuthService.Controllers
             };
             var tokenHandler = new JwtSecurityTokenHandler();
             var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            var claims = data.Claims.ToList();
+            for ( var i = 0; i < claims.Count; i++) 
+            { 
+                Console.WriteLine(claims[i]);
+            }
             var jwtToken = securityToken as JwtSecurityToken;
             if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -106,7 +117,6 @@ namespace AuthService.Controllers
             }
             return data;
         }
-
 
     }
 }

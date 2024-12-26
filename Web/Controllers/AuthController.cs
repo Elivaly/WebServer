@@ -70,9 +70,16 @@ namespace AuthService.Controllers
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
+            var claims = new List<Claim>() 
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.name),
+                new Claim("role", user.description),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
             var token = new JwtSecurityToken( 
                 issuer: _configuration["JWT:Issuer"],
                 audience: _configuration["JWT:Audience"],
+                claims: claims,
                 expires: DateTime.Now.AddMinutes(3),
                 signingCredentials: credentials); 
             return new JwtSecurityTokenHandler().WriteToken(token); 
