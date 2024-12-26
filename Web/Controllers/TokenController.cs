@@ -105,11 +105,12 @@ namespace AuthService.Controllers
             };
             var tokenHandler = new JwtSecurityTokenHandler();
             var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            var claims = data.Claims.ToList();
-            for ( var i = 0; i < claims.Count; i++) 
-            { 
-                Console.WriteLine(claims[i]);
-            }
+            // Для проверки наличия ключевых 
+            //var claims = data.Claims.ToList();
+            //for ( var i = 0; i < claims.Count; i++) 
+            //{ 
+            //    Console.WriteLine(claims[i]);
+            //}
             var jwtToken = securityToken as JwtSecurityToken;
             if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
