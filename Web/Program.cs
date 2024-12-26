@@ -86,8 +86,8 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo 
     { 
         Title = "AuthorizationService", 
-        Version = "v1.0",
-        Description = "ѕроект представл€ет собой сервис дл€ авторизации и переавторизации пользовател€"
+        Version = "v1.",
+        Description = "ѕроект представл€ет собой серверную часть дл€ авторизации и переавторизации пользовател€"
     });
     c.EnableAnnotations();
 });
