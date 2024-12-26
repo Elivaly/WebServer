@@ -31,7 +31,7 @@ namespace Web.Controllers
         {
             if (string.IsNullOrEmpty(name)) 
             { 
-                return BadRequest("Name is required."); 
+                return BadRequest("Имя отсутствует"); 
             }
             List<string> users = new List<string>();
             using (DBC db = new(_configuration))
@@ -44,7 +44,7 @@ namespace Web.Controllers
             }
             if (users == null || users.Count == 0) 
             {
-                return NotFound("No users found with given name");
+                return NotFound("Пользователей с заданным именем не существует");
             }
             return Ok( new { Users = users});
         }
@@ -55,7 +55,7 @@ namespace Web.Controllers
         {
             if (string.IsNullOrEmpty(description)) 
             { 
-                return BadRequest("Description is required."); 
+                return BadRequest("Отсутствует описание роли пользователя"); 
             }
             List <string> users = new List<string>();
             using (DBC db = new(_configuration))
@@ -68,7 +68,7 @@ namespace Web.Controllers
             }
             if (users == null || users.Count == 0) 
             {
-                return NotFound("No users found with given description");
+                return NotFound("Пользователей с заданным описанием не существует");
             }
             return Ok(new { Users = users });
         }
@@ -80,7 +80,7 @@ namespace Web.Controllers
             string user;
             if(index <= 0) 
             {
-                return BadRequest("Index must be greater than zero");
+                return BadRequest("Индекс должен быть больше нуля");
             }
             using (DBC db = new(_configuration))
             {
@@ -92,7 +92,7 @@ namespace Web.Controllers
             }
             if (user == null) 
             {
-                return NotFound("No user with given index");
+                return NotFound("Пользователей с заданным индексом не существует");
             }
             return Ok( new { Name = user });
         }
@@ -108,7 +108,7 @@ namespace Web.Controllers
             }
             if (users == null || users.Count == 0)
             {
-                return NotFound("No users found"); 
+                return NotFound("Пользователи не были найдены"); 
             }
             return Ok( new { Users =  users });
         }
@@ -119,24 +119,24 @@ namespace Web.Controllers
         {
             if (index <= 0) 
             {
-                return BadRequest("Index must be greater than zero.");
+                return BadRequest("Индекс должен быть больше нуля");
             }
             if (string.IsNullOrEmpty(newPassword)) 
             { 
-                return BadRequest("New password is required."); 
+                return BadRequest("Новый пароль отсутствует"); 
             }
             using (DBC db = new(_configuration))
             {
                 var user = db.users.FirstOrDefault(x => x.id == index);
                 if (user == null)
                 {
-                    return NotFound("No user found with the given index.");
+                    return NotFound("Пользователей с заданным индексом не существует");
                 }
                 user.password = newPassword;
                 db.SaveChanges();
             }
 
-            return Ok( new {message =  "Password was changed"});
+            return Ok( new {message =  "Пароль был изменен"});
         }
 
         [HttpPut]
@@ -145,23 +145,23 @@ namespace Web.Controllers
         {
             if (string.IsNullOrEmpty(newDescription)) 
             {
-                return BadRequest("Description is required");
+                return BadRequest("Описание роли пользователя отсутствует");
             }
             if(id < 0) 
             {
-                return BadRequest("Id should be greater than zero");
+                return BadRequest("Индекс должен быть больше нуля");
             }
             using(DBC db = new(_configuration)) 
             {
                 var user = db.users.FirstOrDefault(x => x.id == id);
                 if(user == null) 
                 {
-                    return NotFound("No user foud with the given id");
+                    return NotFound("Пользователей с заданным индексом не существует");
                 }
                 user.description = newDescription;
                 db.SaveChanges();
             }
-            return Ok(new { message =  "Description was changed" });
+            return Ok(new { message =  "Описание роли пользователя было изменено" });
         }
 
         [HttpDelete]
@@ -170,19 +170,19 @@ namespace Web.Controllers
         {
             if (index <= 0) 
             {
-                return BadRequest("Index must be greater than zero");
+                return BadRequest("Индекс должен быть больше нуля");
             }
             using (DBC db = new(_configuration))
             {
                 var user = db.users.FirstOrDefault(x => x.id == index);
                 if (user == null)
                 {
-                    return NotFound("No user found with the given index.");
+                    return NotFound("Пользоваетелей с заданным индексом не существует");
                 }
                 db.users.Remove(user);
                 db.SaveChanges();
             }
-            return Ok( new { message = "User was deleted" });
+            return Ok( new { message = "Пользователь был удален" });
         }
 
     }

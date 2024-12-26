@@ -41,7 +41,7 @@ namespace AuthService.Controllers
 
                 if (existingUser != null)
                 {
-                    return Conflict("User exists");
+                    return Conflict("Пользователь с таким именем уже существует");
                 }
                 db.users.Add(user);
                 db.SaveChanges();

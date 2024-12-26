@@ -43,9 +43,13 @@ namespace AuthService.Controllers
             using (DBC db = new (_configuration)) 
             { 
                 var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
-                if (existingUser == null || existingUser.password != user.password) 
+                if (existingUser == null) 
+                {
+                    return Unauthorized("Пользователя с таким именем не существует");
+                }
+                if (existingUser.password != user.password) 
                 { 
-                    return Unauthorized("Invalid username or password"); 
+                    return Unauthorized("Неправильный пароль"); 
                 }
                
                 var token = GenerateJwtToken(existingUser);
@@ -63,7 +67,7 @@ namespace AuthService.Controllers
         {
             HttpContext.Response.Cookies.Delete("jwtToken");
             _configuration["JWT:Token"] = null;
-            return Ok(new { message = "User logged out successfully" }); 
+            return Ok(new { message = "Пользователь вышел из системы" }); 
         }
 
         private string GenerateJwtToken(User user)

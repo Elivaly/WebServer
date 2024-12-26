@@ -23,16 +23,38 @@ namespace AuthService.Controllers
         }
 
         [HttpGet]
+        [Route("CheckTokens")]
+        public ActionResult TokensCheck() 
+        {
+            var message = "";
+            if (_configuration["JWT:Token"] == HttpContext.Request.Cookies["jwtToken"])
+            {
+                message = "Токены одинаковые";
+            }
+            else
+            {
+                message = "Токены разные";
+            }
+            return Ok(message);
+        }
+
+
+        [HttpGet]
         [Route("DecodeToken")]
         public IActionResult DecodeToken()
         {
-            var token = _configuration["JWT:Token"];
+            var token = HttpContext.Request.Cookies["jwtToken"];
             if (token == null) 
             {
-                return BadRequest("Token is missing");
+                return BadRequest("Токен отсутствует");
+            }            
+            var defaultToken = _configuration["JWT:Token"];
+            if (defaultToken == null) 
+            {
+                return BadRequest("Токен отсутствует");
             }
             var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token); 
+            var jwtToken = handler.ReadJwtToken(defaultToken); 
             var expiration = jwtToken.ValidTo;
             var audience = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Aud)?.Value;
             var issuer = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Iss)?.Value;
@@ -48,7 +70,7 @@ namespace AuthService.Controllers
             var token = HttpContext.Request.Cookies["jwtToken"];
             if (string.IsNullOrEmpty(token))
             {
-                return BadRequest("Token is missing.");
+                return BadRequest("Токен отсутствует");
             }
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
@@ -64,12 +86,12 @@ namespace AuthService.Controllers
             var token = _configuration["JWT:Token"];
             if (string.IsNullOrEmpty(token))
             {
-                return Unauthorized("Token is missing");
+                return Unauthorized("Токен отсутствует");
             }
             var data = GetDataFromExpiredToken(_configuration["JWT:Token"]);
             if (data == null)
             {
-                return Unauthorized("Invalid token");
+                return Unauthorized("Произошла утрата данных");
             }
             var newToken = GenerateJwtToken(data);
             _configuration["JWT:Token"] = token;
