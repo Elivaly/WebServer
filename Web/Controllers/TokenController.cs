@@ -99,7 +99,7 @@ namespace AuthService.Controllers
             }
             var newToken = GenerateJwtToken(data);
             _configuration["JWT:Token"] = token;
-            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(3) });
+            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
             return Ok(new { token });
         }
         
@@ -111,7 +111,7 @@ namespace AuthService.Controllers
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],
                 audience: _configuration["JWT:Audience"],
-                expires: DateTime.Now.AddMinutes(3),
+                expires: DateTime.Now.AddMinutes(1),
                 claims: claims,
                 signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
