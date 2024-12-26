@@ -29,6 +29,14 @@ namespace Web.Controllers
         [Route("GetByName")]
         public IActionResult GetByName([FromQuery][Required] string name) 
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             if (string.IsNullOrEmpty(name)) 
             { 
                 return BadRequest("Имя отсутствует"); 
@@ -53,6 +61,14 @@ namespace Web.Controllers
         [Route("GetNamesByDescription")]
         public IActionResult GetNamesByDescription([FromQuery][Required] string description)
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             if (string.IsNullOrEmpty(description)) 
             { 
                 return BadRequest("Отсутствует описание роли пользователя"); 
@@ -77,6 +93,14 @@ namespace Web.Controllers
         [Route("GetNameByIndex")]
         public IActionResult GetNameByIndex([FromQuery][Required] int index) 
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             string user;
             if(index <= 0) 
             {
@@ -101,6 +125,14 @@ namespace Web.Controllers
         [Route("GetAllUsers")]
         public IActionResult GetAllUsers()
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             List<User> users = new List<User>(); 
             using (DBC db = new(_configuration)) 
             { 
@@ -117,6 +149,14 @@ namespace Web.Controllers
         [Route("UpdatePasswordByIndex")]
         public IActionResult UpdatePasswordByIndex([FromQuery][Required] int index, [FromQuery][Required] string newPassword) 
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             if (index <= 0) 
             {
                 return BadRequest("Индекс должен быть больше нуля");
@@ -143,6 +183,14 @@ namespace Web.Controllers
         [Route("UpdateDescriptionById")]
         public IActionResult UpdateDescriptionById([FromQuery][Required] int id, [FromQuery][Required] string newDescription) 
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             if (string.IsNullOrEmpty(newDescription)) 
             {
                 return BadRequest("Описание роли пользователя отсутствует");
@@ -168,6 +216,14 @@ namespace Web.Controllers
         [Route("DeleteUserByIndex")]
         public IActionResult DeleteUserByIndex([FromQuery][Required] int index) 
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             if (index <= 0) 
             {
                 return BadRequest("Индекс должен быть больше нуля");

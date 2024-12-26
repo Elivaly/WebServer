@@ -65,6 +65,14 @@ namespace AuthService.Controllers
         [Route("Logout")]
         public IActionResult Loguot() 
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             HttpContext.Response.Cookies.Delete("jwtToken");
             _configuration["JWT:Token"] = null;
             return Ok(new { message = "Пользователь вышел из системы" }); 

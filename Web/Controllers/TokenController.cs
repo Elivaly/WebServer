@@ -41,12 +41,19 @@ namespace AuthService.Controllers
             }
             return Ok(message);
         }
-
         */
         [HttpGet]
         [Route("DecodeToken")]
         public IActionResult DecodeToken()
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             var token = HttpContext.Request.Cookies["jwtToken"];
             if (token == null) 
             {
@@ -71,6 +78,14 @@ namespace AuthService.Controllers
         [Route("CheckTokenTime")]
         public IActionResult CheckTokenTime()
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             var token = HttpContext.Request.Cookies["jwtToken"];
             if (string.IsNullOrEmpty(token))
             {
@@ -87,6 +102,14 @@ namespace AuthService.Controllers
         [Route("RefreshTokenTime")]
         public IActionResult RefreshTokenTime()
         {
+            if (HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is null");
+                return StatusCode(500, "Internal server error: HttpContext is null");
+            }
+            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             var token = _configuration["JWT:Token"];
             if (string.IsNullOrEmpty(token))
             {
@@ -131,12 +154,6 @@ namespace AuthService.Controllers
             };
             var tokenHandler = new JwtSecurityTokenHandler();
             var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            // Для проверки наличия ключевых 
-            //var claims = data.Claims.ToList();
-            //for ( var i = 0; i < claims.Count; i++) 
-            //{ 
-            //    Console.WriteLine(claims[i]);
-            //}
             var jwtToken = securityToken as JwtSecurityToken;
             if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
