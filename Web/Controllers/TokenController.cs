@@ -99,27 +99,28 @@ namespace AuthService.Controllers
             var data = GetDataFromExpiredToken(token);
             if (data == null)
             {
-                return Unauthorized("Произошла утрата данных");
+                return Unauthorized("Данные не обнаружены");
             }
             var newToken = GenerateJwtToken(data);
 
             _configuration["JWT:Token"] = newToken;
-            // Обновляем значение новым токеном
-            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions
-            { 
-                HttpOnly = true,
-                Secure = false, 
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(1) 
-            });
+
+            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions{ HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1)});
+
             Response.Headers.Add("Authorization", $"Bearer {newToken}");
+
             return Ok(new { token = newToken }); 
         }
 
 
         private string GenerateJwtToken(ClaimsPrincipal data)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
+            var key = _configuration["JWT:Key"];
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
+            }
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
@@ -143,6 +144,12 @@ namespace AuthService.Controllers
         
         private ClaimsPrincipal GetDataFromExpiredToken(string token)
         {
+            var key = _configuration["JWT:Key"];
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
+            }
+
             var tokenValidationParameters = new TokenValidationParameters 
             { 
                 ValidateIssuer = true,
@@ -151,7 +158,7 @@ namespace AuthService.Controllers
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _configuration["JWT:Issuer"],
                 ValidAudience = _configuration["JWT:Audience"], 
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
             }; 
             var tokenHandler = new JwtSecurityTokenHandler(); 
             var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken); 

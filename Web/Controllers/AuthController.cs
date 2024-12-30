@@ -42,14 +42,10 @@ namespace AuthService.Controllers
 
             using (DBC db = new (_configuration)) 
             { 
-                var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
+                var existingUser = db.users.FirstOrDefault(u => u.name == user.name && u.password == user.password);
                 if (existingUser == null) 
                 {
-                    return Unauthorized("Пользователя с таким именем не существует");
-                }
-                if (existingUser.password != user.password) 
-                { 
-                    return Unauthorized("Неправильный пароль"); 
+                    return Unauthorized("Пользователь не обнаружен");
                 }
                
                 var token = GenerateJwtToken(existingUser);
@@ -73,6 +69,7 @@ namespace AuthService.Controllers
             }
             Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
             Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
             Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
             HttpContext.Response.Cookies.Delete("jwtToken");
             _configuration["JWT:Token"] = null;
@@ -81,7 +78,12 @@ namespace AuthService.Controllers
 
         private string GenerateJwtToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
+            var key = _configuration["JWT:Key"];
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
+            }
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
             var claims = new List<Claim>() 
             {

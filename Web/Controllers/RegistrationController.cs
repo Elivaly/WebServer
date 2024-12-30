@@ -2,6 +2,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using AuthService.Handler;
 using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
@@ -34,15 +35,40 @@ namespace AuthService.Controllers
             Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
             Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-
             using (var db = new DBC(_configuration))
             {
-                var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
+                var name = user.name;
+                var password = user.password;
+                var role = user.description;
 
-                if (existingUser != null)
+                if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.description) || string.IsNullOrEmpty(user.password))
                 {
-                    return Conflict("Пользователь с таким именем уже существует");
+                    return Unauthorized(new { message = "Пустая строка" });
                 }
+
+                if (SpaceCheck(name) || SpaceCheck(password) || SpaceCheck(role)) 
+                {
+                    return Unauthorized(new { message = "В одной из строк содержатся пробелы" });
+                }
+
+                if (SpecialSymbolCheck(name) ||  SpecialSymbolCheck(password) || SpecialSymbolCheck(role)) 
+                {
+                    return Unauthorized(new {message = "В одной из строк содержатся специальные символы"});
+                }
+
+                if (DashCheck(name) || DashCheck(password)  || DashCheck(role)) 
+                {
+                    return Unauthorized("В одной из строк содержится тире");
+                }
+                if (user.name.Length > 50)
+                {
+                    return Unauthorized(new { message = "Длина имени пользователя должна составлять не более 50 символов" });
+                }
+                if(user.description.Length > 20) 
+                {
+                    return Unauthorized(new { message = "Длина роли пользователя должна составлять не более 20 символов" });
+                }
+
                 db.users.Add(user);
                 db.SaveChanges();
             };
@@ -78,6 +104,26 @@ namespace AuthService.Controllers
                 signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
 
+        }
+        private bool SpaceCheck(string str) // проверка на наличие пробела в строке 
+        {
+            bool checker = false;
+            if (str.Contains(" ")) checker = true;
+            return checker;
+        }
+        private bool SpecialSymbolCheck(string str)
+        {  
+            bool checker = false;
+            string pattern = @"[!@#$%^&*(),.?\"":{}|<>`~/=_+'№;]";
+            Regex regex = new Regex(pattern);
+            if (regex.IsMatch(str)) checker = true;
+            return checker;
+        }
+        private bool DashCheck(string str) 
+        {
+            bool checker = false;
+            if(str.Contains("-")) checker = true;
+            return checker;
         }
     }
 }

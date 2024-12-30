@@ -25,6 +25,7 @@ namespace Web.Controllers
         {
             _configuration = configuration;
         }
+
         [HttpGet]
         [Route("GetByName")]
         public IActionResult GetByName([FromQuery][Required] string name) 
@@ -104,7 +105,7 @@ namespace Web.Controllers
                         .Where(x => x.id == index)
                         .Select(x => x.name)
                         .Distinct()
-                        .FirstOrDefault();
+                        .FirstOrDefault()!;
             }
             if (user == null) 
             {
