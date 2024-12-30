@@ -48,6 +48,7 @@ namespace AuthService.Controllers
             };
 
             var token = GenerateJwtToken(user);
+            Response.Headers.Add("Authorization", $"Bearer {token}");
             _configuration["JWT:Token"] = token;
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
             return Ok(new { token });

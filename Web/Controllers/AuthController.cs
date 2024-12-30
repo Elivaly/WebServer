@@ -54,6 +54,7 @@ namespace AuthService.Controllers
                
                 var token = GenerateJwtToken(existingUser);
                 _configuration["JWT:Token"]=token;
+                Response.Headers.Add("Authorization", $"Bearer {token}");
 
                 HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
@@ -72,7 +73,7 @@ namespace AuthService.Controllers
             }
             Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
             Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
+            Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
             HttpContext.Response.Cookies.Delete("jwtToken");
             _configuration["JWT:Token"] = null;
             return Ok(new { message = "Пользователь вышел из системы" }); 

@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using AuthService.Schems;
+using IdentityModel.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,27 +22,7 @@ namespace AuthService.Controllers
         {
             _configuration = configuration;
         }
-        /*
-        [HttpGet]
-        [Route("CheckTokens")]
-        public ActionResult TokensCheck() 
-        {
-            var message = "";
-            if (_configuration["JWT:Token"] == HttpContext.Request.Cookies["jwtToken"])
-            {
-                message = "Токены одинаковые";
-            }
-            else if (_configuration["JWT:Token"] == "" && HttpContext.Request.Cookies["jwtToken"] == null)
-            {
-                message = "Токены не существуют";
-            }
-            else
-            {
-                message = "Токены разные";
-            }
-            return Ok(message);
-        }
-        */
+
         [HttpGet]
         [Route("DecodeToken")]
         public IActionResult DecodeToken()
@@ -69,7 +50,7 @@ namespace AuthService.Controllers
             var expiration = jwtToken.ValidTo;
             var audience = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Aud)?.Value;
             var issuer = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Iss)?.Value;
-            var username = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+            var username = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value; 
             var role = jwtToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
             return Ok(new { Exp = expiration, Audience = audience, Issuer = issuer, Username = username, Role = role});
         }
@@ -97,68 +78,89 @@ namespace AuthService.Controllers
             var timeRemaining = expiration - DateTime.UtcNow;
             return Ok(new { expiration, timeRemaining });
         }
-        
+
         [HttpPost]
         [Route("RefreshTokenTime")]
         public IActionResult RefreshTokenTime()
         {
-            if (HttpContext == null)
-            {
+            if (HttpContext == null) 
+            { 
                 Console.WriteLine("HttpContext is null");
                 return StatusCode(500, "Internal server error: HttpContext is null");
             }
             Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}"); 
 
-            var token = _configuration["JWT:Token"];
-            if (string.IsNullOrEmpty(token))
-            {
-                return Unauthorized("Токен отсутствует");
+            var token = _configuration["JWT:Token"]; 
+            if (string.IsNullOrEmpty(token)) 
+            { 
+                return Unauthorized("Токен отсутствует"); 
             }
-            var data = GetDataFromExpiredToken(_configuration["JWT:Token"]);
+            var data = GetDataFromExpiredToken(token);
             if (data == null)
             {
                 return Unauthorized("Произошла утрата данных");
             }
             var newToken = GenerateJwtToken(data);
-            _configuration["JWT:Token"] = token;
-            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
-            return Ok(new { token });
+
+            _configuration["JWT:Token"] = newToken;
+            // Обновляем значение новым токеном
+            HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions
+            { 
+                HttpOnly = true,
+                Secure = false, 
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(1) 
+            });
+            Response.Headers.Add("Authorization", $"Bearer {newToken}");
+            return Ok(new { token = newToken }); 
         }
-        
+
+
         private string GenerateJwtToken(ClaimsPrincipal data)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = data.Claims.ToList();
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, data.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "unknown"),
+                new Claim("role", data.FindFirst(ClaimTypes.Role)?.Value ?? "unknown"),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) 
+            };
+
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],
-                audience: _configuration["JWT:Audience"],
-                expires: DateTime.Now.AddMinutes(1),
-                claims: claims,
-                signingCredentials: credentials);
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+                audience: _configuration["JWT:Audience"], 
+                expires: DateTime.Now.AddMinutes(1), 
+                claims: claims, 
+                signingCredentials: credentials
+                ); 
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
+            return (tokenString);
+        }
+        
         private ClaimsPrincipal GetDataFromExpiredToken(string token)
         {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
+            var tokenValidationParameters = new TokenValidationParameters 
+            { 
                 ValidateIssuer = true,
-                ValidateAudience = true,
+                ValidateAudience = true, 
                 ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _configuration["JWT:Issuer"],
-                ValidAudience = _configuration["JWT:Audience"],
+                ValidAudience = _configuration["JWT:Audience"], 
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]))
-            };
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            var jwtToken = securityToken as JwtSecurityToken;
-            if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
+            }; 
+            var tokenHandler = new JwtSecurityTokenHandler(); 
+            var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken); 
+            var jwtToken = securityToken as JwtSecurityToken; 
+            if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase)) 
+            { 
                 throw new SecurityTokenException("Invalid token");
-            }
+            } 
+
             return data;
         }
 

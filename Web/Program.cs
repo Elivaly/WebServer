@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using AuthService.Exceptions;
+using AuthService.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,7 +87,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo 
     { 
         Title = "AuthorizationService", 
-        Version = "v1.",
+        Version = "v1.2",
         Description = "ѕроект представл€ет собой серверную часть дл€ авторизации и переавторизации пользовател€"
     });
     c.EnableAnnotations();
@@ -105,7 +106,8 @@ app.UseSwaggerUI();
 app.UseCors("AllowAll");
 
 //app.UseHttpsRedirection();
-
+app.UseMiddleware<TokenValidateMiddleware>();
+app.UseMiddleware<LoggingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
