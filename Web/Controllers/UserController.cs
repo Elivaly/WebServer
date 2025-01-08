@@ -63,7 +63,7 @@ public class UserController : ControllerBase
             {
                 return NotFound(new { message = "Пользователей с заданным индексом не существует" });
             }
-            user.password = newPassword;
+            user.password = Hash(newPassword);
             db.SaveChanges();
         }
 
@@ -114,6 +114,14 @@ public class UserController : ControllerBase
             db.SaveChanges();
         }
         return Ok( new { message = "Пользователь был удален" });
+    }
+    private string Hash(string password)
+    {
+        byte[] data = Encoding.Default.GetBytes(password);
+        SHA1 sha = new SHA1CryptoServiceProvider();
+        byte[] result = sha.ComputeHash(data);
+        password = Convert.ToBase64String(result);
+        return password;
     }
 
 }
