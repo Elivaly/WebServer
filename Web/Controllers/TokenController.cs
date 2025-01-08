@@ -38,12 +38,12 @@ public class TokenController : ControllerBase
         var token = HttpContext.Request.Cookies["jwtToken"];
         if (token == null) 
         {
-            return BadRequest("Токен отсутствует");
+            return BadRequest(new { message = "Токен отсутствует" });
         }            
         var defaultToken = _configuration["JWT:Token"];
         if (defaultToken == null) 
         {
-            return BadRequest("Токен отсутствует");
+            return BadRequest(new { message = "Токен отсутствует" });
         }
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(defaultToken); 
@@ -70,7 +70,7 @@ public class TokenController : ControllerBase
         var token = HttpContext.Request.Cookies["jwtToken"];
         if (string.IsNullOrEmpty(token))
         {
-            return BadRequest("Токен отсутствует");
+            return BadRequest(new { message = "Токен отсутствует" });
         }
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
@@ -94,12 +94,12 @@ public class TokenController : ControllerBase
         var token = _configuration["JWT:Token"]; 
         if (string.IsNullOrEmpty(token)) 
         { 
-            return Unauthorized("Токен отсутствует"); 
+            return Unauthorized(new { message = "Токен отсутствует" }); 
         }
         var data = GetDataFromExpiredToken(token);
         if (data == null)
         {
-            return Unauthorized("Данные не обнаружены");
+            return Unauthorized(new { message = "Данные не обнаружены" });
         }
         var newToken = GenerateJwtToken(data);
 

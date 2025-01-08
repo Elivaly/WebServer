@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using AuthService.Handler;
@@ -8,7 +9,6 @@ using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
-using XSystem.Security.Cryptography;
 
 namespace AuthService.Controllers;
 
@@ -42,7 +42,6 @@ public class RegistrationController : ControllerBase
             var password = Hash(user.password);
             user.password = password;
             var role = user.description;
-            Console.WriteLine(password);
             #region ValidateChekers
             if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.description) || string.IsNullOrEmpty(user.password))
             {
@@ -61,7 +60,7 @@ public class RegistrationController : ControllerBase
 
             if (DashCheck(name) || DashCheck(role)) 
             {
-                return Unauthorized("В одной из строк содержится тире");
+                return Unauthorized(new { message = "В одной из строк содержится тире" });
             }
             if (user.name.Length > 50)
             {
@@ -72,7 +71,11 @@ public class RegistrationController : ControllerBase
                 return Unauthorized(new { message = "Длина роли пользователя должна составлять не более 20 символов" });
             }
             #endregion
-
+            var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
+            if (existingUser != null)
+            {
+                return Unauthorized(new { message = "Пользователь с таким логином уже существует" });
+            }
             db.users.Add(user);
             db.SaveChanges();
         };
@@ -129,7 +132,6 @@ public class RegistrationController : ControllerBase
         if(str.Contains("-")) checker = true;
         return checker;
     }
-
     private string Hash (string password) 
     {
         byte [] data = Encoding.Default.GetBytes(password);

@@ -11,7 +11,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Localization;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using XSystem.Security.Cryptography;
+using System.Security.Cryptography;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
 namespace AuthService.Controllers;
 
@@ -27,9 +28,15 @@ public class AuthController : ControllerBase
         
     }
 
+    /// <summary>
+    /// Вход по логин-паролю
+    /// </summary>
+    /// <remarks>
+    /// Web -> Controllers -> AuthController
+    /// </remarks>
     [HttpPost]
-    [Route("Login")] 
-    public IActionResult Login([FromBody] User user) 
+    [Route("LoginByPassword")] 
+    public IActionResult LoginByPassword([FromBody] User user) 
     {
 
         // Проверка доступности HttpContext
@@ -42,11 +49,12 @@ public class AuthController : ControllerBase
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
         using (DBC db = new (_configuration)) 
-        { 
-            var existingUser = db.users.FirstOrDefault(u => u.name == user.name && u.password == Hash(user.password));
+        {
+            user.password = Hash(user.password);
+            var existingUser = db.users.FirstOrDefault(u => u.name == user.name && u.password == user.password && u.description == user.description);
             if (existingUser == null) 
             {
-                return Unauthorized("Пользователь не обнаружен");
+                return Unauthorized(new { message = "Неверный логин или пароль или описание роли" });
             }
            
             var token = GenerateJwtToken(existingUser);
@@ -59,6 +67,34 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Вход по ЭЦП
+    /// </summary>
+    /// <remarks>
+    /// Web -> Controllers -> AuthController
+    /// </remarks>
+    [HttpPost]
+    [Route("LoginByEDS")]
+    public IActionResult LoginByEDS() 
+    {
+        // Проверка доступности HttpContext
+        if (HttpContext == null)
+        {
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Выход из аккаунта, удаляет токен
+    /// </summary>
+    /// <remarks>
+    /// Web -> Controllers -> AuthController
+    /// </remarks>
     [HttpPost]
     [Route("Logout")]
     public IActionResult Loguot() 
