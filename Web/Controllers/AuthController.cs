@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
             var existingUser = db.users.FirstOrDefault(u => u.name == user.name && u.password == user.password);
             if (existingUser == null) 
             {
-                return Unauthorized(new { message = "Неверный логин или пароль или описание роли" });
+                return Unauthorized(new { message = "Неверный логин или пароль" });
             }
            
             var token = GenerateJwtToken(existingUser);
