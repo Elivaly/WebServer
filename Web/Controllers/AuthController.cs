@@ -11,93 +11,102 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Localization;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using XSystem.Security.Cryptography;
 
-namespace AuthService.Controllers
+namespace AuthService.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    IConfiguration _configuration;
+
+    public AuthController(IConfiguration configuration)
     {
-        IConfiguration _configuration;
+        _configuration = configuration;
+        
+    }
 
-        public AuthController(IConfiguration configuration)
+    [HttpPost]
+    [Route("Login")] 
+    public IActionResult Login([FromBody] User user) 
+    {
+
+        // Проверка доступности HttpContext
+        if (HttpContext == null)
         {
-            _configuration = configuration;
-            
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
         }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-        [HttpPost]
-        [Route("Login")] 
-        public IActionResult Login([FromBody] User user) 
+        using (DBC db = new (_configuration)) 
+        { 
+            var existingUser = db.users.FirstOrDefault(u => u.name == user.name && u.password == Hash(user.password));
+            if (existingUser == null) 
+            {
+                return Unauthorized("Пользователь не обнаружен");
+            }
+           
+            var token = GenerateJwtToken(existingUser);
+            _configuration["JWT:Token"]=token;
+            Response.Headers.Add("Authorization", $"Bearer {token}");
+
+            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
+
+            return Ok(new { token = token});
+        }
+    }
+
+    [HttpPost]
+    [Route("Logout")]
+    public IActionResult Loguot() 
+    {
+        if (HttpContext == null)
         {
-
-            // Проверка доступности HttpContext
-            if (HttpContext == null)
-            {
-                Console.WriteLine("HttpContext is null");
-                return StatusCode(500, "Internal server error: HttpContext is null");
-            }
-            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
-            using (DBC db = new (_configuration)) 
-            { 
-                var existingUser = db.users.FirstOrDefault(u => u.name == user.name && u.password == user.password);
-                if (existingUser == null) 
-                {
-                    return Unauthorized("Пользователь не обнаружен");
-                }
-               
-                var token = GenerateJwtToken(existingUser);
-                _configuration["JWT:Token"]=token;
-                Response.Headers.Add("Authorization", $"Bearer {token}");
-
-                HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
-
-                return Ok(new { token = token});
-            }
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
         }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-        [HttpPost]
-        [Route("Logout")]
-        public IActionResult Loguot() 
+        Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        HttpContext.Response.Cookies.Delete("jwtToken");
+        _configuration["JWT:Token"] = null;
+        return Ok(new { message = "Пользователь вышел из системы" }); 
+    }
+
+    private string GenerateJwtToken(User user)
+    {
+        var key = _configuration["JWT:Key"];
+        if (string.IsNullOrEmpty(key))
         {
-            if (HttpContext == null)
-            {
-                Console.WriteLine("HttpContext is null");
-                return StatusCode(500, "Internal server error: HttpContext is null");
-            }
-            Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-            Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
-            Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-            HttpContext.Response.Cookies.Delete("jwtToken");
-            _configuration["JWT:Token"] = null;
-            return Ok(new { message = "Пользователь вышел из системы" }); 
+            throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
         }
-
-        private string GenerateJwtToken(User user)
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
+        var claims = new List<Claim>() 
         {
-            var key = _configuration["JWT:Key"];
-            if (string.IsNullOrEmpty(key))
-            {
-                throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
-            }
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
-            var claims = new List<Claim>() 
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.name),
-                new Claim("role", user.description),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-            var token = new JwtSecurityToken( 
-                issuer: _configuration["JWT:Issuer"],
-                audience: _configuration["JWT:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(1),
-                signingCredentials: credentials); 
-            return new JwtSecurityTokenHandler().WriteToken(token); 
-        }
+            new Claim(JwtRegisteredClaimNames.Sub, user.name),
+            new Claim("role", user.description),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+        var token = new JwtSecurityToken( 
+            issuer: _configuration["JWT:Issuer"],
+            audience: _configuration["JWT:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(1),
+            signingCredentials: credentials); 
+        return new JwtSecurityTokenHandler().WriteToken(token); 
+    }
+
+    private string Hash(string password)
+    {
+        byte[] data = Encoding.Default.GetBytes(password);
+        SHA1 sha = new SHA1CryptoServiceProvider();
+        byte[] result = sha.ComputeHash(data);
+        password = Convert.ToBase64String(result);
+        return password;
     }
 }
