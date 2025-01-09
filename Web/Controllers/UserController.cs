@@ -28,6 +28,13 @@ public class UserController : ControllerBase
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Получение всех существующих пользователей в БД
+    /// </summary>
+    /// <remarks>
+    /// Для удобства проверки регистрации
+    /// </remarks>
+    /// <response code="404">Пользовательские данные отсутствуют</response>
     [HttpGet]
     [Route("GetAllUsers")]
     public IActionResult GetAllUsers()
@@ -39,11 +46,19 @@ public class UserController : ControllerBase
         }
         if (users == null || users.Count == 0)
         {
-            return NotFound(new { message = "Пользователи не были найдены" }); 
+            return NotFound(new { message = "Пользовательские данные отсутствуют" }); 
         }
         return Ok( new { Users =  users });
     }
 
+    /// <summary>
+    /// Изменение пароля пользователя по ID
+    /// </summary>
+    /// <remarks>
+    /// Для изменения существующего пароля, на случай если забылся старый. Все пароли захешированы
+    /// </remarks>
+    /// <response code="400">Некорректно введенные данные</response>
+    /// <response code="404">Пользователь не найден</response>
     [HttpPut]
     [Route("UpdatePasswordById")]
     public IActionResult UpdatePasswordById([FromQuery][Required] int index, [FromQuery][Required] string newPassword) 
@@ -61,7 +76,7 @@ public class UserController : ControllerBase
             var user = db.users.FirstOrDefault(x => x.id == index);
             if (user == null)
             {
-                return NotFound(new { message = "Пользователей с заданным индексом не существует" });
+                return NotFound(new { message = "Пользователь не найден" });
             }
             user.password = Hash(newPassword);
             db.SaveChanges();
@@ -70,31 +85,14 @@ public class UserController : ControllerBase
         return Ok( new {message =  "Пароль был изменен"});
     }
 
-    [HttpPut]
-    [Route("UpdateDescriptionById")]
-    public IActionResult UpdateDescriptionById([FromQuery][Required] int id, [FromQuery][Required] string newDescription) 
-    {
-        if (string.IsNullOrEmpty(newDescription)) 
-        {
-            return BadRequest(new { message = "Описание роли пользователя отсутствует" });
-        }
-        if(id < 0) 
-        {
-            return BadRequest(new { message = "Индекс должен быть больше нуля" });
-        }
-        using(DBC db = new(_configuration)) 
-        {
-            var user = db.users.FirstOrDefault(x => x.id == id);
-            if(user == null)
-            {
-                return NotFound(new { message = "Пользователей с заданным индексом не существует" });
-            }
-            user.role = newDescription;
-            db.SaveChanges();
-        }
-        return Ok(new { message =  "Описание роли пользователя было изменено" });
-    }
-
+    /// <summary>
+    /// Удаление пользователя по ID
+    /// </summary>
+    /// <remarks>
+    /// Для быстрого удаления во время проверки, а не через консоль
+    /// </remarks>
+    /// <response code="400">Некорректно введенные данные</response>
+    /// <response code="404">Пользователь не найден</response>
     [HttpDelete]
     [Route("DeleteUserById")]
     public IActionResult DeleteUserById([FromQuery][Required] int index) 

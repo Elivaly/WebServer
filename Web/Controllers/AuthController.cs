@@ -34,6 +34,9 @@ public class AuthController : ControllerBase
     /// <remarks>
     /// Web -> Controllers -> AuthController
     /// </remarks>
+    /// <response code="400">Некорректно введенные данные</response>
+    /// <response code="401">Неверный логин или пароль</response>
+    /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("LoginByPassword")] 
     public IActionResult LoginByPassword([FromBody] User user) 
@@ -56,9 +59,14 @@ public class AuthController : ControllerBase
             {
                 return Unauthorized(new { message = "Неверный логин или пароль" });
             }
-           
+            var expiration = DateTime.UtcNow.AddMinutes(1);
+            var refreshToken = GetRefreshToken();
+            existingUser.expiresin = expiration;
+            existingUser.refreshtoken = refreshToken + user.name;
+            db.SaveChanges();
             var token = GenerateJwtToken(existingUser);
             _configuration["JWT:Token"]=token;
+            _configuration["JWT:Refresh"] = refreshToken;
             Response.Headers.Add("Authorization", $"Bearer {token}");
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
@@ -68,11 +76,13 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Вход по ЭЦП
+    /// Вход по ЭЦП (в разработке)
     /// </summary>
     /// <remarks>
     /// Web -> Controllers -> AuthController
     /// </remarks>
+    /// <response code="401">Не удается подтвердить подпись</response>
+    /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("LoginByEDS")]
     public IActionResult LoginByEDS() 
@@ -113,6 +123,13 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Пользователь вышел из системы" }); 
     }
 
+    private string GetRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
     private string GenerateJwtToken(User user)
     {
         var key = _configuration["JWT:Key"];
@@ -125,7 +142,6 @@ public class AuthController : ControllerBase
         var claims = new List<Claim>() 
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.name),
-            new Claim("role", user.role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var token = new JwtSecurityToken( 

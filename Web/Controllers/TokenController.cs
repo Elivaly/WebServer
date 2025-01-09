@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using AuthService.Handler;
 using AuthService.Schems;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,14 @@ public class TokenController : ControllerBase
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Декодировка токена
+    /// </summary>
+    /// <remarks>
+    /// Для перепроверки поступают ли пользовательские данные во время создания токена
+    /// </remarks>
+    /// <response code="404">Токен отсутствует</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("DecodeToken")]
     public IActionResult DecodeToken()
@@ -38,12 +47,12 @@ public class TokenController : ControllerBase
         var token = HttpContext.Request.Cookies["jwtToken"];
         if (token == null) 
         {
-            return BadRequest(new { message = "Токен отсутствует" });
+            return NotFound(new { message = "Токен отсутствует" });
         }            
         var defaultToken = _configuration["JWT:Token"];
         if (defaultToken == null) 
         {
-            return BadRequest(new { message = "Токен отсутствует" });
+            return NotFound(new { message = "Токен отсутствует" });
         }
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(defaultToken); 
@@ -51,10 +60,17 @@ public class TokenController : ControllerBase
         var audience = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Aud)?.Value;
         var issuer = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Iss)?.Value;
         var username = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value; 
-        var role = jwtToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
-        return Ok(new { Exp = expiration, Audience = audience, Issuer = issuer, Username = username, Role = role});
+        return Ok(new { Exp = expiration, Audience = audience, Issuer = issuer, Username = username});
     }
 
+    /// <summary>
+    /// Проверка времени жизни токена
+    /// </summary>
+    /// <remarks>
+    /// Возвращает время жизни токена
+    /// </remarks>
+    /// <response code="404">Токен отсутствует</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("CheckTokenTime")]
     public IActionResult CheckTokenTime()
@@ -67,18 +83,32 @@ public class TokenController : ControllerBase
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-        var token = HttpContext.Request.Cookies["jwtToken"];
+        var token = _configuration["JWT:Token"];
         if (string.IsNullOrEmpty(token))
         {
-            return BadRequest(new { message = "Токен отсутствует" });
+            return NotFound(new { message = "Токен отсутствует" });
         }
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
         var expiration = jwtToken.ValidTo;
         var timeRemaining = expiration - DateTime.UtcNow;
-        return Ok(new { expiration, timeRemaining });
+        var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+        if (timeRemainingMilliSeconds < 0) 
+        {
+            _configuration["JWT:Token"] = "";
+            return Unauthorized("Время жизни токена истекло");
+        }
+        return Ok(new { expiration, timeRemainingMilliSeconds });
     }
 
+    /// <summary>
+    /// Обновление времени жизни токена
+    /// </summary>
+    /// <remarks>
+    /// Перезапускает таймлайн если токен жив или обновляет старый.
+    /// </remarks>
+    /// <response code="404">Токен отсутствует</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("RefreshTokenTime")]
     public IActionResult RefreshTokenTime()
@@ -91,15 +121,15 @@ public class TokenController : ControllerBase
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}"); 
 
-        var token = _configuration["JWT:Token"]; 
+        var token = _configuration["JWT:Refresh"]; 
         if (string.IsNullOrEmpty(token)) 
         { 
-            return Unauthorized(new { message = "Токен отсутствует" }); 
+            return NotFound(new { message = "Токен отсутствует" }); 
         }
         var data = GetDataFromExpiredToken(token);
         if (data == null)
         {
-            return Unauthorized(new { message = "Данные не обнаружены" });
+            return NotFound(new { message = "Данные не обнаружены" });
         }
         var newToken = GenerateJwtToken(data);
 
@@ -109,7 +139,51 @@ public class TokenController : ControllerBase
 
         Response.Headers.Add("Authorization", $"Bearer {newToken}");
 
-        return Ok(new { token = newToken }); 
+        return Ok(new { token = newToken });
+
+
+
+        if (token == null || !token.IsActive) { return Unauthorized(new { message = "Неверный или истекший рефреш токен" }); } var user = db.Users.SingleOrDefault(u => u.Id == token.UserId); if (user == null) { return Unauthorized(new { message = "Пользователь не найден" }); } var newJwtToken = GenerateJwtToken(user); var newRefreshToken = GenerateRefreshToken(); token.Revoked = DateTime.UtcNow; SaveRefreshToken(user.Id, newRefreshToken); return Ok(new { token = newJwtToken, refreshToken = newRefreshToken }); }
+
+    }
+
+    /// <summary>
+    /// Подтверждение действительности токена
+    /// </summary>
+    /// <remarks>
+    /// Возвращает булевое значение (есть токен или нет)
+    /// </remarks>
+    /// <response code="401">Время жизни токена истекло</response>
+    /// <response code="404">Токен отсутствует</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
+    [HttpGet]
+    [Route("SubmitJWT")]
+    public IActionResult SubmitJWT() 
+    {
+        if (HttpContext == null)
+        {
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+        var token = _configuration["JWT:Token"];
+        if (string.IsNullOrEmpty(token))
+        {
+            return NotFound(new { message = "Токен отсутствует" });
+        }
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var expiration = jwtToken.ValidTo;
+        var timeRemaining = expiration - DateTime.UtcNow;
+        if (timeRemaining > TimeSpan.Zero) 
+        {
+            return Ok(true);
+        }
+        else 
+        {
+            return Unauthorized(false);
+        }
     }
 
     private string GenerateJwtToken(ClaimsPrincipal data)

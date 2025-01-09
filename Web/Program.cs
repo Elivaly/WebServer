@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using AuthService.Exceptions;
 using AuthService.Middleware;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +91,9 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1.2",
         Description = "ѕроект представл€ет собой серверную часть дл€ авторизации и переавторизации пользовател€"
     });
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"; 
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile); 
+    c.IncludeXmlComments(xmlPath);
     c.EnableAnnotations();
 });
 

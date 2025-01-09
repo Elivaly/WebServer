@@ -23,6 +23,16 @@ public class RegistrationController : ControllerBase
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Регистрация нового пользователя
+    /// </summary>
+    /// <remarks>
+    /// У каждого пользователя должно быть уникальное имя
+    /// </remarks>
+    /// <response code="400">Неккоректно введенные данные</response>
+    /// <response code="401">Пользователь с таким логином существует</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
+
     [HttpPost]
     [Route("Registration")]
     public IActionResult Registration([FromBody][Required] User user)
@@ -41,44 +51,62 @@ public class RegistrationController : ControllerBase
             var name = user.name;
             var password = Hash(user.password);
             user.password = password;
-            var role = user.role;
+            user.datecreate = DateOnly.FromDateTime(DateTime.Now);
+
+            var refreshToken = GetRefreshToken();
+            user.refreshtoken = refreshToken + user.name;
+
             #region ValidateChekers
-            if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.password) || string.IsNullOrEmpty(user.role))
+            if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.password))
             {
                 return Unauthorized(new { message = "Пустая строка" });
             }
 
-            if (SpaceCheck(name) || SpaceCheck(password) || SpaceCheck(role)) 
+            if (SpaceCheck(name) || SpaceCheck(password))
             {
-                return Unauthorized(new { message = "В одной из строк содержатся пробелы" });
+                return BadRequest(new { message = "В одной из строк содержатся пробелы" });
             }
 
-            if (SpecialSymbolCheck(name) || SpecialSymbolCheck(role)) 
+            if (SpecialSymbolCheck(name))
             {
-                return Unauthorized(new {message = "В имени пользователя или роли содержатся специальные символы"});
+                return BadRequest(new { message = "В имени пользователя содержатся специальные символы" });
             }
 
-            if (DashCheck(name) || DashCheck(role)) 
+            if (DashCheck(name))
             {
-                return Unauthorized(new { message = "В имени пользователя или роли содержится тире" });
+                return BadRequest(new { message = "В имени пользователя содержится тире" });
             }
             #endregion
+
             var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
             if (existingUser != null)
             {
                 return Unauthorized(new { message = "Пользователь с таким логином уже существует" });
             }
-            user.role = "Client";
+
+            var token = GenerateJwtToken(user);
+            Response.Headers.Add("Authorization", $"Bearer {token}");
+            _configuration["JWT:Token"] = token;
+            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
+
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var expiration = jwtToken.ValidTo;
+            user.expiresin = expiration;
+
             db.users.Add(user);
             db.SaveChanges();
-        };
 
-        var token = GenerateJwtToken(user);
-        Response.Headers.Add("Authorization", $"Bearer {token}");
-        _configuration["JWT:Token"] = token;
-        HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
-        return Ok(new { token });
+            return Ok(new { token });
+        }
+    }
 
+    private string GetRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
     }
     private string GenerateJwtToken(User user)
     {
@@ -93,7 +121,6 @@ public class RegistrationController : ControllerBase
         var claims = new List<Claim>()
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.name),
-            new Claim("role", user.role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var token = new JwtSecurityToken(
