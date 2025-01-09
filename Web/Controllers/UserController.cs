@@ -89,7 +89,7 @@ public class UserController : ControllerBase
             {
                 return NotFound(new { message = "Пользователей с заданным индексом не существует" });
             }
-            user.description = newDescription;
+            user.role = newDescription;
             db.SaveChanges();
         }
         return Ok(new { message =  "Описание роли пользователя было изменено" });

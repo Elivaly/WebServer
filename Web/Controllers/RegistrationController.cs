@@ -41,9 +41,9 @@ public class RegistrationController : ControllerBase
             var name = user.name;
             var password = Hash(user.password);
             user.password = password;
-            var role = user.description;
+            var role = user.role;
             #region ValidateChekers
-            if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.description) || string.IsNullOrEmpty(user.password))
+            if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.password) || string.IsNullOrEmpty(user.role))
             {
                 return Unauthorized(new { message = "Пустая строка" });
             }
@@ -55,20 +55,12 @@ public class RegistrationController : ControllerBase
 
             if (SpecialSymbolCheck(name) || SpecialSymbolCheck(role)) 
             {
-                return Unauthorized(new {message = "В одной из строк содержатся специальные символы"});
+                return Unauthorized(new {message = "В имени пользователя или роли содержатся специальные символы"});
             }
 
             if (DashCheck(name) || DashCheck(role)) 
             {
-                return Unauthorized(new { message = "В одной из строк содержится тире" });
-            }
-            if (user.name.Length > 50)
-            {
-                return Unauthorized(new { message = "Длина имени пользователя должна составлять не более 50 символов" });
-            }
-            if(user.description.Length > 20) 
-            {
-                return Unauthorized(new { message = "Длина роли пользователя должна составлять не более 20 символов" });
+                return Unauthorized(new { message = "В имени пользователя или роли содержится тире" });
             }
             #endregion
             var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
@@ -76,6 +68,7 @@ public class RegistrationController : ControllerBase
             {
                 return Unauthorized(new { message = "Пользователь с таким логином уже существует" });
             }
+            user.role = "Client";
             db.users.Add(user);
             db.SaveChanges();
         };
@@ -100,7 +93,7 @@ public class RegistrationController : ControllerBase
         var claims = new List<Claim>()
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.name),
-            new Claim("role", user.description),
+            new Claim("role", user.role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var token = new JwtSecurityToken(

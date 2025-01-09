@@ -125,7 +125,7 @@ public class AuthController : ControllerBase
         var claims = new List<Claim>() 
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.name),
-            new Claim("role", user.description),
+            new Claim("role", user.role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var token = new JwtSecurityToken( 
