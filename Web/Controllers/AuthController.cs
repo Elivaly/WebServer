@@ -32,7 +32,7 @@ public class AuthController : ControllerBase
     /// Вход по логин-паролю
     /// </summary>
     /// <remarks>
-    /// Web -> Controllers -> AuthController
+    /// Выдает 2 токена для пользователя
     /// </remarks>
     /// <response code="400">Некорректно введенные данные</response>
     /// <response code="401">Неверный логин или пароль</response>
@@ -61,8 +61,9 @@ public class AuthController : ControllerBase
             }
             var expiration = DateTime.UtcNow.AddMinutes(1);
             var refreshToken = GetRefreshToken();
-            existingUser.expiresin = expiration;
-            existingUser.refreshtoken = refreshToken + user.name;
+            existingUser.expiresaccess = expiration;
+            existingUser.refreshtoken = refreshToken;
+            existingUser.expiresrefresh = DateTime.UtcNow.AddMinutes(2);
             db.SaveChanges();
             var token = GenerateJwtToken(existingUser);
             _configuration["JWT:Token"]=token;
@@ -71,7 +72,7 @@ public class AuthController : ControllerBase
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
-            return Ok(new { token = token});
+            return Ok(new { access = token, refresh = refreshToken});
         }
     }
 
@@ -79,7 +80,7 @@ public class AuthController : ControllerBase
     /// Вход по ЭЦП (в разработке)
     /// </summary>
     /// <remarks>
-    /// Web -> Controllers -> AuthController
+    /// Нужен клиент и ключ получить сперва
     /// </remarks>
     /// <response code="401">Не удается подтвердить подпись</response>
     /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
@@ -100,14 +101,16 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Выход из аккаунта, удаляет токен
+    /// Выход из аккаунта
     /// </summary>
     /// <remarks>
-    /// Web -> Controllers -> AuthController
+    /// Убирает у пользователя оба токена
     /// </remarks>
+    /// <response code="401">Пользователь не авторизован</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("Logout")]
-    public IActionResult Loguot() 
+    public IActionResult Logout() 
     {
         if (HttpContext == null)
         {
@@ -117,9 +120,24 @@ public class AuthController : ControllerBase
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
+        if(_configuration["JWT:Refresh"] == "" || _configuration["JWT:Token"] == "") 
+        {
+            return Unauthorized("Пользователь не вошел в систему");
+        }
+
+        using (DBC db = new DBC(_configuration))
+        {
+            var user = db.users.FirstOrDefault(u => u.refreshtoken == _configuration["JWT:Refresh"]);
+            if (user != null) 
+            {
+                user.refreshtoken = "EXPIRES_DATA"; 
+                db.SaveChanges();
+            }
+        }
         Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         HttpContext.Response.Cookies.Delete("jwtToken");
-        _configuration["JWT:Token"] = null;
+        _configuration["JWT:Token"] = "";
+        _configuration["JWT:Refresh"] = "";
         return Ok(new { message = "Пользователь вышел из системы" }); 
     }
 

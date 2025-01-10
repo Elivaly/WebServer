@@ -54,7 +54,8 @@ public class RegistrationController : ControllerBase
             user.datecreate = DateOnly.FromDateTime(DateTime.Now);
 
             var refreshToken = GetRefreshToken();
-            user.refreshtoken = refreshToken + user.name;
+            user.refreshtoken = refreshToken;
+            user.expiresrefresh = DateTime.UtcNow.AddMinutes(2);
 
             #region ValidateChekers
             if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.password))
@@ -87,17 +88,18 @@ public class RegistrationController : ControllerBase
             var token = GenerateJwtToken(user);
             Response.Headers.Add("Authorization", $"Bearer {token}");
             _configuration["JWT:Token"] = token;
+            _configuration["JWT:Refresh"] = refreshToken;
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
             var expiration = jwtToken.ValidTo;
-            user.expiresin = expiration;
+            user.expiresaccess = expiration;
 
             db.users.Add(user);
             db.SaveChanges();
 
-            return Ok(new { token });
+            return Ok(new { access = token, refresh = refreshToken });
         }
     }
 

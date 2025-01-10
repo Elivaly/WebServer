@@ -19,6 +19,9 @@ public class User
     public string refreshtoken { get; set; } = string.Empty;
 
     [SwaggerIgnore]
-    public DateTime expiresin { get; set; }
+    public DateTime expiresaccess { get; set; }
+
+    [SwaggerIgnore]
+    public DateTime expiresrefresh { get; set; }
 
 }
