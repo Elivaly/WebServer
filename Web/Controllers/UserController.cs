@@ -42,7 +42,7 @@ public class UserController : ControllerBase
         List<User> users = new List<User>(); 
         using (DBC db = new(_configuration)) 
         { 
-            users = db.users.OrderBy(x => x.id).ToList(); 
+            users = db.Users.OrderBy(x => x.Id).ToList(); 
         }
         if (users == null || users.Count == 0)
         {
@@ -73,12 +73,12 @@ public class UserController : ControllerBase
         }
         using (DBC db = new(_configuration))
         {
-            var user = db.users.FirstOrDefault(x => x.id == index);
+            var user = db.Users.FirstOrDefault(x => x.Id == index);
             if (user == null)
             {
                 return NotFound(new { message = "Пользователь не найден" });
             }
-            user.password = Hash(newPassword);
+            user.Password = Hash(newPassword);
             db.SaveChanges();
         }
 
@@ -103,12 +103,12 @@ public class UserController : ControllerBase
         }
         using (DBC db = new(_configuration))
         {
-            var user = db.users.FirstOrDefault(x => x.id == index);
+            var user = db.Users.FirstOrDefault(x => x.Id == index);
             if (user == null)
             {
                 return NotFound(new { message = "Пользоваетелей с заданным индексом не существует" });
             }
-            db.users.Remove(user);
+            db.Users.Remove(user);
             db.SaveChanges();
         }
         return Ok( new { message = "Пользователь был удален" });

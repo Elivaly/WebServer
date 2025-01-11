@@ -48,17 +48,17 @@ public class RegistrationController : ControllerBase
 
         using (var db = new DBC(_configuration))
         {
-            var name = user.name;
-            var password = Hash(user.password);
-            user.password = password;
-            user.datecreate = DateOnly.FromDateTime(DateTime.Now);
+            var name = user.Name;
+            var password = Hash(user.Password);
+            user.Password = password;
+            user.DateCreate = DateOnly.FromDateTime(DateTime.Now);
 
             var refreshToken = GetRefreshToken();
-            user.refreshtoken = refreshToken;
-            user.expiresrefresh = DateTime.UtcNow.AddMinutes(2);
+            user.RefreshToken = refreshToken;
+            user.ExpiresRefresh = DateTime.UtcNow.AddMinutes(2);
 
             #region ValidateChekers
-            if (string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.password))
+            if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
             {
                 return Unauthorized(new { message = "Пустая строка" });
             }
@@ -79,7 +79,7 @@ public class RegistrationController : ControllerBase
             }
             #endregion
 
-            var existingUser = db.users.FirstOrDefault(u => u.name == user.name);
+            var existingUser = db.Users.FirstOrDefault(u => u.Name == user.Name);
             if (existingUser != null)
             {
                 return Unauthorized(new { message = "Пользователь с таким логином уже существует" });
@@ -94,9 +94,9 @@ public class RegistrationController : ControllerBase
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
             var expiration = jwtToken.ValidTo;
-            user.expiresaccess = expiration;
+            user.ExpiresAccess = expiration;
 
-            db.users.Add(user);
+            db.Users.Add(user);
             db.SaveChanges();
 
             return Ok(new { access = token, refresh = refreshToken });
@@ -122,7 +122,7 @@ public class RegistrationController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.name),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Name),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var token = new JwtSecurityToken(

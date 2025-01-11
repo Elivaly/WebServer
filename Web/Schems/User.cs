@@ -8,20 +8,20 @@ public class User
 {
     [Key]
     [SwaggerSchema(ReadOnly = true)]
-    public int id { get; set; }
-    public string name { get; set; }
-    public string password { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Password { get; set; }
 
     [SwaggerIgnore]
-    public DateOnly datecreate { get; set; }
+    public DateOnly DateCreate { get; set; }
     
     [SwaggerIgnore]
-    public string refreshtoken { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
 
     [SwaggerIgnore]
-    public DateTime expiresaccess { get; set; }
+    public DateTime ExpiresAccess { get; set; }
 
     [SwaggerIgnore]
-    public DateTime expiresrefresh { get; set; }
+    public DateTime ExpiresRefresh { get; set; }
 
 }

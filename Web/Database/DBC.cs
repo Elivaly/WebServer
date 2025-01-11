@@ -9,7 +9,8 @@ namespace AuthService.Handler;
 public class DBC : DbContext
 {
     public DbContext context;
-    public DbSet<User> users { get; set; } = null!;
+    public DbSet<User> Users { get; set; } = null!;
+
 
     private IConfiguration _configuration;
     public DBC(IConfiguration config)

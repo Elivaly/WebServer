@@ -96,7 +96,7 @@ public class TokenController : ControllerBase
         {
             return Ok(new { timeRemaining = -1 });
         }
-        return Ok(timeRemainingMilliSeconds);
+        return Ok(new { timeRemaining = timeRemainingMilliSeconds });
     }
 
     /// <summary>
@@ -124,28 +124,28 @@ public class TokenController : ControllerBase
         var tokenR = "";
         using (DBC db = new DBC(_configuration)) 
         {
-            var user = db.users.FirstOrDefault(u => u.refreshtoken == refreshToken);
+            var user = db.Users.FirstOrDefault(u => u.RefreshToken == refreshToken);
             if (user == null) 
             {
                 return BadRequest("Некорректные данные");
             }
  
-            if (DateTime.Now > user.expiresrefresh) 
+            if (DateTime.Now > user.ExpiresRefresh) 
             {
                 _configuration["JWT:Token"] = "";
                 _configuration["JWT:Refresh"] = "";
-                user.refreshtoken = "EXPIRES_DATA";
+                user.RefreshToken = "EXPIRES_DATA";
                 return Unauthorized("Время жизни рефреш токена истекло. Перепройдите авторизацию");
             }
             var accessToken = GenerateJwtToken(user);
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(accessToken);
             var expiration = jwtToken.ValidTo;
-            user.expiresaccess = expiration;
+            user.ExpiresAccess = expiration;
             tokenA = accessToken;
             tokenR = GetRefreshToken();
-            user.refreshtoken = tokenR;
-            user.expiresrefresh = DateTime.UtcNow.AddMinutes(2);
+            user.RefreshToken = tokenR;
+            user.ExpiresRefresh = DateTime.UtcNow.AddMinutes(2);
             db.SaveChanges();
         }
         _configuration["JWT:Token"] = tokenA;
@@ -215,7 +215,7 @@ public class TokenController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.name),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Name),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var token = new JwtSecurityToken(

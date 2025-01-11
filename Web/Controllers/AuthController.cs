@@ -46,17 +46,17 @@ public class AuthController : ControllerBase
 
         using (DBC db = new (_configuration)) 
         {
-            user.password = Hash(user.password);
-            var existingUser = db.users.FirstOrDefault(u => u.name == user.name && u.password == user.password);
+            user.Password = Hash(user.Password);
+            var existingUser = db.Users.FirstOrDefault(u => u.Name == user.Name && u.Password == user.Password);
             if (existingUser == null) 
             {
                 return Unauthorized(new { message = "Неверный логин или пароль" });
             }
             var expiration = DateTime.UtcNow.AddMinutes(1);
             var refreshToken = GetRefreshToken();
-            existingUser.expiresaccess = expiration;
-            existingUser.refreshtoken = refreshToken;
-            existingUser.expiresrefresh = DateTime.UtcNow.AddMinutes(2);
+            existingUser.ExpiresAccess = expiration;
+            existingUser.RefreshToken = refreshToken;
+            existingUser.ExpiresRefresh = DateTime.UtcNow.AddMinutes(2);
             db.SaveChanges();
             var token = GenerateJwtToken(existingUser);
             _configuration["JWT:Token"]=token;
@@ -133,10 +133,10 @@ public class AuthController : ControllerBase
 
         using (DBC db = new DBC(_configuration))
         {
-            var user = db.users.FirstOrDefault(u => u.refreshtoken == _configuration["JWT:Refresh"]);
+            var user = db.Users.FirstOrDefault(u => u.RefreshToken == _configuration["JWT:Refresh"]);
             if (user != null) 
             {
-                user.refreshtoken = "EXPIRES_DATA"; 
+                user.RefreshToken = "EXPIRES_DATA"; 
                 db.SaveChanges();
             }
         }
@@ -165,7 +165,7 @@ public class AuthController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
         var claims = new List<Claim>() 
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.name),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Name),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var token = new JwtSecurityToken( 
