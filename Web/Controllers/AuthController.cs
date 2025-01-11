@@ -99,6 +99,7 @@ public class AuthController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [Route("GetTempKey")]
+    [Obsolete]
     public IActionResult GetTempKey() 
     {
         return Ok();
@@ -114,6 +115,7 @@ public class AuthController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("Logout")]
+    [Obsolete]
     public IActionResult Logout() 
     {
         if (HttpContext == null)

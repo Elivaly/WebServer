@@ -95,9 +95,9 @@ public class TokenController : ControllerBase
         if (timeRemainingMilliSeconds < 0) 
         {
             _configuration["JWT:Token"] = "";
-            return Unauthorized("Срок жизни токена истек");
+            return Ok(0);
         }
-        return Ok(new { expiration, timeRemainingMilliSeconds });
+        return Ok(1);
     }
 
     /// <summary>
