@@ -36,6 +36,7 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("DecodeToken")]
+    [Obsolete]
     public IActionResult DecodeToken()
     {
         if (HttpContext == null)

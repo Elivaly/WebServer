@@ -1,26 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using AuthService.Handler;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using BCrypt.Net;
 using AuthService.Schems;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Localization;
-using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using System.Security.Cryptography;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Security;
-using System.Security.Cryptography.Xml;
-using Org.BouncyCastle.Crypto.Generators;
-using System.Security.Cryptography.X509Certificates;
-using Org.BouncyCastle.Cms;
-using Org.BouncyCastle.X509;
-using ElectronicSignature.Certification;
 
 namespace AuthService.Controllers;
 
@@ -118,6 +103,7 @@ public class AuthController : ControllerBase
     {
         return Ok();
     }
+
     /// <summary>
     /// Выход из аккаунта
     /// </summary>
@@ -188,55 +174,6 @@ public class AuthController : ControllerBase
             signingCredentials: credentials); 
         return new JwtSecurityTokenHandler().WriteToken(token); 
     }
-
-    public void CreateKeyPair() 
-    {
-        //пара ключей
-        var KeyGenerationParameters = new KeyGenerationParameters(new SecureRandom(), 255);
-        var KeyGenerator = new RsaKeyPairGenerator();
-        KeyGenerator.Init(KeyGenerationParameters);
-        var rsaKeyPair = KeyGenerator.GenerateKeyPair();
-    }
-
-    //шифровка открытым ключом
-    public byte[] EncryptDataByPublicCert(byte[] data, X509Certificate2 publicCert) 
-    {
-        var envelopGenerator = new CmsEnvelopedDataGenerator();
-        var cert = new X509CertificateParser().ReadCertificate(publicCert.RawData);
-        envelopGenerator.AddKeyTransRecipient(cert);
-
-        return envelopGenerator.Generate(new CmsProcessableByteArray(data), CmsEnvelopedGenerator.DesEde3Cbc).GetEncoded();
-    }
-
-    // расшифрока закрытым ключом
-    public static byte[] DecryptDataWithPrivateCert(byte[] encryptedData, X509Certificate2 privateCert, string? password)
-    {
-        AsymmetricKeyParameter key;
-
-        try
-        {
-            key = DotNetUtilities.GetKeyPair(privateCert.GetRSAPrivateKey()).Private ?? DotNetUtilities.GetKeyPair(privateCert.GetECDsaPrivateKey()).Private;
-        }
-        catch (Exception)
-        {
-            key = privateCert.GetPrivateKeyFromCert(password);
-        }
-
-        var x509Certificate = DotNetUtilities.FromX509Certificate(privateCert);
-
-        var recipientInfos = new CmsEnvelopedData(encryptedData).GetRecipientInfos();
-
-        RecipientInformation? firstRecipient = null;
-
-        foreach (var recipientInfo in recipientInfos.GetRecipients())
-        {
-            if (recipientInfo.RecipientID.Issuer.Equivalent(x509Certificate.IssuerDN) || recipientInfo.RecipientID.SerialNumber.Equals(x509Certificate.SerialNumber))
-                firstRecipient = recipientInfo;
-        }
-
-        return firstRecipient!.GetContent(key);
-    }
-
     private string Hash(string password)
     {
         byte[] data = Encoding.Default.GetBytes(password);
