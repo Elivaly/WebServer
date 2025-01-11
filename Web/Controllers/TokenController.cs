@@ -94,10 +94,9 @@ public class TokenController : ControllerBase
         var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
         if (timeRemainingMilliSeconds < 0) 
         {
-            _configuration["JWT:Token"] = "";
-            return Ok(0);
+            return Ok(new { timeRemaining = -1 });
         }
-        return Ok(1);
+        return Ok(timeRemainingMilliSeconds);
     }
 
     /// <summary>

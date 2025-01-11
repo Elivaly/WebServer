@@ -79,6 +79,7 @@ public class AuthController : ControllerBase
     /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("LoginByEDS")]
+    [Obsolete]
     public IActionResult LoginByEDS() 
     {
         // Проверка доступности HttpContext
@@ -115,7 +116,6 @@ public class AuthController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("Logout")]
-    [Obsolete]
     public IActionResult Logout() 
     {
         if (HttpContext == null)
