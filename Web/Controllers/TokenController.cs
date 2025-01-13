@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -36,8 +37,7 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("DecodeToken")]
-    [Obsolete]
-    public IActionResult DecodeToken()
+    public IActionResult DecodeToken([Required] string token)
     {
         if (HttpContext == null)
         {
@@ -47,18 +47,43 @@ public class TokenController : ControllerBase
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-        var token = HttpContext.Request.Cookies["jwtToken"];
-        if (_configuration["JWT:Token"] == "" || token == null) 
-        {
-            return NotFound(new { message = "Время жизни токена истекло" });
-        }
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token); 
-        var expiration = jwtToken.ValidTo;
-        var audience = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Aud)?.Value;
-        var issuer = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Iss)?.Value;
-        var username = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value; 
-        return Ok(new { Exp = expiration, Audience = audience, Issuer = issuer, Username = username});
+        try
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            { 
+                ValidateIssuer = true, 
+                ValidateAudience = true, 
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true, 
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            }; 
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken); 
+            var jwt = validatedToken as JwtSecurityToken; 
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration)) 
+            {
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
+                }
+                return Ok(new { userData = user });
+            }
+        } 
+        catch (SecurityTokenExpiredException)
+        { 
+            return Unauthorized("Время жизни токена истекло"); 
+        } 
+        catch (Exception ex)
+        { 
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            return BadRequest("Несуществующий токен");
+        }
     }
 
     /// <summary>
@@ -72,7 +97,7 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("CheckTokenTime")]
-    public IActionResult CheckTokenTime()
+    public IActionResult CheckTokenTime([Required]string token)
     {
         if (HttpContext == null)
         {
@@ -82,80 +107,57 @@ public class TokenController : ControllerBase
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-        var token = _configuration["JWT:Token"];
         if (string.IsNullOrEmpty(token))
         {
             return NotFound(new { message = "Токен отсутствует" });
         }
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-        var expiration = jwtToken.ValidTo;
-        var timeRemaining = expiration - DateTime.UtcNow;
-        var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
-        if (timeRemainingMilliSeconds < 0) 
+        try
         {
-            return Ok(new { timeRemaining = -1 });
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var jwt = validatedToken as JwtSecurityToken;
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration))
+            {
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
+                }
+                var expiration = jwt.ValidTo;
+                var timeRemaining = expiration - DateTime.UtcNow;
+                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+                if (timeRemainingMilliSeconds < 0)
+                {
+                    return Ok(new { timeRemaining = -1 });
+                }
+                return Ok(new { timeRemaining = timeRemainingMilliSeconds });
+            }
         }
-        return Ok(new { timeRemaining = timeRemainingMilliSeconds });
+        catch (SecurityTokenExpiredException)
+        {
+            return Unauthorized("Время жизни токена истекло");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            return BadRequest("Несуществующий токен");
+        }
     }
 
-    /// <summary>
-    /// Обновление времени жизни токена
-    /// </summary>
-    /// <remarks>
-    /// Перезапускает таймлайн если рефреш токен жив.
-    /// </remarks>
-    /// <response code="400">Неккоректные данные</response>
-    /// <response code="401">Время жизни токена истекло. Пользователь не авторизован</response>
-    /// <response code="404">Токен отсутствует</response>
-    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
-    [HttpPost]
-    [Route("RefreshTokenTime")]
-    public IActionResult RefreshTokenTime([Required] string refreshToken)
-    {
-        if (HttpContext == null) 
-        { 
-            Console.WriteLine("HttpContext is null");
-            return StatusCode(500, "Internal server error: HttpContext is null");
-        }
-        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-        var tokenA = "";
-        var tokenR = "";
-        using (DBC db = new DBC(_configuration)) 
-        {
-            var user = db.Users.FirstOrDefault(u => u.RefreshToken == refreshToken);
-            if (user == null) 
-            {
-                return BadRequest("Некорректные данные");
-            }
- 
-            if (DateTime.Now > user.ExpiresRefresh) 
-            {
-                _configuration["JWT:Token"] = "";
-                _configuration["JWT:Refresh"] = "";
-                user.RefreshToken = "EXPIRES_DATA";
-                return Unauthorized("Время жизни рефреш токена истекло. Перепройдите авторизацию");
-            }
-            var accessToken = GenerateJwtToken(user);
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(accessToken);
-            var expiration = jwtToken.ValidTo;
-            user.ExpiresAccess = expiration;
-            tokenA = accessToken;
-            tokenR = GetRefreshToken();
-            user.RefreshToken = tokenR;
-            user.ExpiresRefresh = DateTime.UtcNow.AddMinutes(2);
-            db.SaveChanges();
-        }
-        _configuration["JWT:Token"] = tokenA;
-        _configuration["JWT:Refresh"] = tokenR;
-        HttpContext.Response.Cookies.Append("jwtToken", tokenA, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
-        Response.Headers.Add("Authorization", $"Bearer {tokenA}");
-
-        return Ok(new { access = tokenA, refresh = tokenR });
-
-    }
 
     /// <summary>
     /// Подтверждение действительности токена
@@ -167,7 +169,7 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("SubmitJWT")]
-    public IActionResult SubmitJWT() 
+    public IActionResult SubmitJWT([Required]string token) 
     {
         if (HttpContext == null)
         {
@@ -176,21 +178,173 @@ public class TokenController : ControllerBase
         }
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-        var token = _configuration["JWT:Token"];
-        if (string.IsNullOrEmpty(token))
-        {
-            return Unauthorized(new { message = "Время жизни токена истекло" });
-        }
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-        var expiration = jwtToken.ValidTo;
-        var timeRemaining = expiration - DateTime.UtcNow;
-        if (timeRemaining <= TimeSpan.Zero)
+        try
         {
-            return Unauthorized(new { message = "Время жизни токена истекло" });
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var jwt = validatedToken as JwtSecurityToken;
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration))
+            {
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
+                }
+                var expiration = jwt.ValidTo;
+                var timeRemaining = expiration - DateTime.UtcNow;
+                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+                if (timeRemainingMilliSeconds < 0)
+                {
+                    return Unauthorized(new { message = "Время жизни токена истекло"});
+                }
+                return Ok(true);
+            }
         }
-        return Ok(true);
+        catch (SecurityTokenExpiredException)
+        {
+            return Unauthorized("Время жизни токена истекло");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            return BadRequest("Несуществующий токен");
+        }
     }
+
+
+    /// <summary>
+    /// Обновление времени жизни токена
+    /// </summary>
+    /// <remarks>
+    /// Возвращает новый токен с новым временем жизни
+    /// </remarks>
+    /// <response code="404">Токен отсутствует</response>
+    /// <response code="500">Во время исполнения произошла ошибка на стороне сервера</response>
+    [HttpPost]
+    [Route("RefreshTokenTime")]
+    public IActionResult RefreshTokenTime([Required]string token) 
+    {
+        if (HttpContext == null)
+        {
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
+        var handler = new JwtSecurityTokenHandler();
+        try
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var jwt = validatedToken as JwtSecurityToken;
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration))
+            {
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
+                }
+                var data = GetDataFromExpiredToken(token);
+                var newToken = GenerateJwtToken(data);
+                _configuration["JWT:Token"] = newToken;
+                HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
+                Response.Headers.Add("Authorization", $"Bearer {newToken}");
+                return Ok(new { token = newToken });
+            }
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            return Unauthorized("Время жизни токена истекло");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка:{ex.Message}");
+            return BadRequest("Несуществующий токен");
+        }
+    }
+
+    private ClaimsPrincipal GetDataFromExpiredToken(string token)
+    {
+        var key = _configuration["JWT:Key"];
+        if (string.IsNullOrEmpty(key))
+        {
+            throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
+        }
+
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = false,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = _configuration["JWT:Issuer"],
+            ValidAudience = _configuration["JWT:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+        };
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var data = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+        var jwtToken = securityToken as JwtSecurityToken;
+        if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+        {
+            throw new SecurityTokenException("Invalid token");
+        }
+
+        return data;
+    }
+
+    private string GenerateJwtToken(ClaimsPrincipal data)
+    {
+        var key = _configuration["JWT:Key"];
+        if (string.IsNullOrEmpty(key))
+        {
+            throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
+        }
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, data.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "unknown") // возвращает unknown после рефреша
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["JWT:Issuer"],
+            audience: _configuration["JWT:Audience"],
+            expires: DateTime.Now.AddMinutes(1),
+            claims: claims,
+            signingCredentials: credentials);
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return (tokenString);
+    }
+
 
     /// <summary>
     /// Полчение времени сервера
@@ -202,38 +356,5 @@ public class TokenController : ControllerBase
         var time = DateTime.Now;
         return Ok(new { ServerTime = time });
     } 
-
-    private string GenerateJwtToken(User user)
-    {
-
-        var key = _configuration["JWT:Key"];
-        if (string.IsNullOrEmpty(key))
-        {
-            throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
-        }
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-        var claims = new List<Claim>()
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Name),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-        var token = new JwtSecurityToken(
-            issuer: _configuration["JWT:Issuer"],
-            audience: _configuration["JWT:Audience"],
-            expires: DateTime.Now.AddMinutes(1),
-            claims: claims,
-            signingCredentials: credentials);
-        return new JwtSecurityTokenHandler().WriteToken(token);
-
-    }
-
-    private string GetRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber);
-    }
 
 }

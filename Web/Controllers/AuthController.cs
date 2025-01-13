@@ -48,62 +48,18 @@ public class AuthController : ControllerBase
         {
             user.Password = Hash(user.Password);
             var existingUser = db.Users.FirstOrDefault(u => u.Name == user.Name && u.Password == user.Password);
-            if (existingUser == null) 
+            if (existingUser == null)
             {
                 return Unauthorized(new { message = "Неверный логин или пароль" });
             }
-            var expiration = DateTime.UtcNow.AddMinutes(1);
-            var refreshToken = GetRefreshToken();
-            existingUser.ExpiresAccess = expiration;
-            existingUser.RefreshToken = refreshToken;
-            existingUser.ExpiresRefresh = DateTime.UtcNow.AddMinutes(2);
-            db.SaveChanges();
             var token = GenerateJwtToken(existingUser);
             _configuration["JWT:Token"]=token;
-            _configuration["JWT:Refresh"] = refreshToken;
             Response.Headers.Add("Authorization", $"Bearer {token}");
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
-            return Ok(new { access = token, refresh = refreshToken});
+            return Ok(new { access = token});
         }
-    }
-
-    /// <summary>
-    /// Вход по ЭЦП (в разработке)
-    /// </summary>
-    /// <remarks>
-    /// Нужен клиент и ключ получить сперва
-    /// </remarks>
-    /// <response code="401">Не удается подтвердить подпись</response>
-    /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
-    [HttpPost]
-    [Route("LoginByEDS")]
-    [Obsolete]
-    public IActionResult LoginByEDS() 
-    {
-        // Проверка доступности HttpContext
-        if (HttpContext == null)
-        {
-            Console.WriteLine("HttpContext is null");
-            return StatusCode(500, "Internal server error: HttpContext is null");
-        }
-        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
-        return Ok();
-    }
-
-    /// <summary>
-    /// Получение временного ключа для ЭЦП (в разработке)
-    /// </summary>
-    /// <returns></returns>
-    [HttpGet]
-    [Route("GetTempKey")]
-    [Obsolete]
-    public IActionResult GetTempKey() 
-    {
-        return Ok();
     }
 
     /// <summary>
@@ -126,34 +82,28 @@ public class AuthController : ControllerBase
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-        if(_configuration["JWT:Refresh"] == "" || _configuration["JWT:Token"] == "") 
+        var token = _configuration["JWT:Token"];
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var expiration = jwtToken.ValidTo;
+        var timeRemaining = expiration - DateTime.UtcNow;
+        if (timeRemaining <= TimeSpan.Zero)
+        {
+            return Unauthorized(new { message = "Пользователь вышел из системы" });
+        }
+
+
+        if (_configuration["JWT:Token"] == "") 
         {
             return Unauthorized("Пользователь не вошел в систему");
         }
 
-        using (DBC db = new DBC(_configuration))
-        {
-            var user = db.Users.FirstOrDefault(u => u.RefreshToken == _configuration["JWT:Refresh"]);
-            if (user != null) 
-            {
-                user.RefreshToken = "EXPIRES_DATA"; 
-                db.SaveChanges();
-            }
-        }
         Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         HttpContext.Response.Cookies.Delete("jwtToken");
         _configuration["JWT:Token"] = "";
-        _configuration["JWT:Refresh"] = "";
         return Ok(new { message = "Пользователь вышел из системы" }); 
     }
 
-    private string GetRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber);
-    }
     private string GenerateJwtToken(User user)
     {
         var key = _configuration["JWT:Key"];
@@ -165,8 +115,7 @@ public class AuthController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
         var claims = new List<Claim>() 
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Name),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString())
         };
         var token = new JwtSecurityToken( 
             issuer: _configuration["JWT:Issuer"],
@@ -176,6 +125,8 @@ public class AuthController : ControllerBase
             signingCredentials: credentials); 
         return new JwtSecurityTokenHandler().WriteToken(token); 
     }
+
+
     private string Hash(string password)
     {
         byte[] data = Encoding.Default.GetBytes(password);

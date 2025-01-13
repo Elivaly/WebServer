@@ -14,14 +14,5 @@ public class User
 
     [SwaggerIgnore]
     public DateOnly DateCreate { get; set; }
-    
-    [SwaggerIgnore]
-    public string RefreshToken { get; set; } = string.Empty;
-
-    [SwaggerIgnore]
-    public DateTime ExpiresAccess { get; set; }
-
-    [SwaggerIgnore]
-    public DateTime ExpiresRefresh { get; set; }
 
 }

@@ -53,10 +53,6 @@ public class RegistrationController : ControllerBase
             user.Password = password;
             user.DateCreate = DateOnly.FromDateTime(DateTime.Now);
 
-            var refreshToken = GetRefreshToken();
-            user.RefreshToken = refreshToken;
-            user.ExpiresRefresh = DateTime.UtcNow.AddMinutes(2);
-
             #region ValidateChekers
             if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
             {
@@ -85,30 +81,17 @@ public class RegistrationController : ControllerBase
                 return Unauthorized(new { message = "Пользователь с таким логином уже существует" });
             }
 
-            var token = GenerateJwtToken(user);
-            Response.Headers.Add("Authorization", $"Bearer {token}");
-            _configuration["JWT:Token"] = token;
-            _configuration["JWT:Refresh"] = refreshToken;
-            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
-
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-            var expiration = jwtToken.ValidTo;
-            user.ExpiresAccess = expiration;
-
             db.Users.Add(user);
             db.SaveChanges();
 
-            return Ok(new { access = token, refresh = refreshToken });
-        }
-    }
 
-    private string GetRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber);
+            var token = GenerateJwtToken(user);
+            Response.Headers.Add("Authorization", $"Bearer {token}");
+            _configuration["JWT:Token"] = token;
+            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
+
+            return Ok(new { access = token});
+        }
     }
     private string GenerateJwtToken(User user)
     {
@@ -122,14 +105,13 @@ public class RegistrationController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Name),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString())
         };
         var token = new JwtSecurityToken(
             issuer: _configuration["JWT:Issuer"],
             audience: _configuration["JWT:Audience"],
-            expires: DateTime.Now.AddMinutes(1),
             claims: claims,
+            expires: DateTime.Now.AddMinutes(1),
             signingCredentials: credentials);
         return new JwtSecurityTokenHandler().WriteToken(token);
 
