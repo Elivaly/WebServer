@@ -31,7 +31,7 @@ public class TokenController : ControllerBase
     /// Декодировка токена
     /// </summary>
     /// <remarks>
-    /// Для перепроверки поступают ли пользовательские данные во время создания токена
+    /// Возвращает айдишник пользователя
     /// </remarks>
     /// <response code="404">Токен отсутствует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
@@ -67,17 +67,24 @@ public class TokenController : ControllerBase
             // Проверка наличия пользователя в базе данных
             using (DBC db = new DBC(_configuration)) 
             {
+                if (token != _configuration["JWT:Token"])
+                {
+                    return Unauthorized("Токен не действителен");
+                }
+                var expiration = jwt.ValidTo;
+                var timeRemaining = expiration - DateTime.UtcNow;
+                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+                if (timeRemainingMilliSeconds < 0)
+                {
+                    return Unauthorized(new { message = "Время жизни токена истекло" });
+                }
                 var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
                 if (user == null)
                 {
                     return NotFound("Пользователь не существует");
                 }
-                return Ok(new { userData = user });
+                return Ok(new { ID = user.Id });
             }
-        } 
-        catch (SecurityTokenExpiredException)
-        { 
-            return Unauthorized("Время жизни токена истекло"); 
         } 
         catch (Exception ex)
         { 
@@ -132,24 +139,24 @@ public class TokenController : ControllerBase
             // Проверка наличия пользователя в базе данных
             using (DBC db = new DBC(_configuration))
             {
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
-                if (user == null)
+                if (token != _configuration["JWT:Token"])
                 {
-                    return NotFound("Пользователь не существует");
+                    return Unauthorized("Токен не действителен");
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Ok(new { timeRemaining = -1 });
+                    return Ok(new { timeRemaining = -1});
+                }
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
                 }
                 return Ok(new { timeRemaining = timeRemainingMilliSeconds });
             }
-        }
-        catch (SecurityTokenExpiredException)
-        {
-            return Unauthorized("Время жизни токена истекло");
         }
         catch (Exception ex)
         {
@@ -199,24 +206,24 @@ public class TokenController : ControllerBase
             // Проверка наличия пользователя в базе данных
             using (DBC db = new DBC(_configuration))
             {
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
-                if (user == null)
+                if (token != _configuration["JWT:Token"])
                 {
-                    return NotFound("Пользователь не существует");
+                    return Unauthorized("Токен не действителен");
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло"});
+                    return Unauthorized(new { message = "Время жизни токена истекло" });
+                }
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
                 }
                 return Ok(true);
             }
-        }
-        catch (SecurityTokenExpiredException)
-        {
-            return Unauthorized("Время жизни токена истекло");
         }
         catch (Exception ex)
         {
@@ -279,16 +286,74 @@ public class TokenController : ControllerBase
                 return Ok(new { token = newToken });
             }
         }
-        catch (SecurityTokenExpiredException)
-        {
-            return Unauthorized("Время жизни токена истекло");
-        }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка:{ex.Message}");
             return BadRequest("Несуществующий токен");
         }
     }
+
+    /// <summary>
+    /// Получение хеша и логина пользователя
+    /// </summary>
+    [HttpGet]
+    [Route("GetUserData")]
+    public IActionResult GetUserData([Required] string token) 
+    {
+        if (HttpContext == null)
+        {
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
+        var handler = new JwtSecurityTokenHandler();
+        try
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var jwt = validatedToken as JwtSecurityToken;
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration))
+            {
+                if (token != _configuration["JWT:Token"])
+                {
+                    return Unauthorized("Токен не действителен");
+                }
+                var expiration = jwt.ValidTo;
+                var timeRemaining = expiration - DateTime.UtcNow;
+                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+                if (timeRemainingMilliSeconds < 0)
+                {
+                    return Unauthorized(new { message = "Время жизни токена истекло" });
+                }
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
+                }
+                return Ok(new {username = user.Name, passwordHash = user.Password});
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            return BadRequest("Несуществующий токен");
+        }
+    }
+
 
     private ClaimsPrincipal GetDataFromExpiredToken(string token)
     {
@@ -347,7 +412,7 @@ public class TokenController : ControllerBase
 
 
     /// <summary>
-    /// Полчение времени сервера
+    /// Получение времени сервера
     /// </summary>
     [HttpGet]
     [Route("GetServerTime")]
