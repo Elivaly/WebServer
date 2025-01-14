@@ -29,7 +29,7 @@ public class RegistrationController : ControllerBase
     /// <remarks>
     /// У каждого пользователя должно быть уникальное имя
     /// </remarks>
-    /// <response code="400">Неккоректно введенные данные</response>
+    /// <response code="400">Некорректно введенные данные</response>
     /// <response code="401">Пользователь с таким логином существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
 
@@ -56,7 +56,7 @@ public class RegistrationController : ControllerBase
             #region ValidateChekers
             if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
             {
-                return Unauthorized(new { message = "Пустая строка" });
+                return BadRequest(new { message = "Пустая строка" });
             }
 
             if (SpaceCheck(name) || SpaceCheck(password))

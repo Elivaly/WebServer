@@ -57,26 +57,26 @@ public class UserController : ControllerBase
     /// <remarks>
     /// Для изменения существующего пароля, на случай если забылся старый. Все пароли захешированы
     /// </remarks>
-    /// <response code="400">Некорректно введенные данные</response>
-    /// <response code="404">Пользователь не найден</response>
+    /// <response code="400">Некорректные данные</response>
+    /// <response code="404">Пользователь не существует</response>
     [HttpPut]
     [Route("UpdatePasswordById")]
     public IActionResult UpdatePasswordById([FromQuery][Required] int index, [FromQuery][Required] string newPassword) 
     {
         if (index <= 0) 
         {
-            return BadRequest(new { message = "Индекс должен быть больше нуля" });
+            return BadRequest(new { message = "Индекс меньше нуля" });
         }
         if (string.IsNullOrEmpty(newPassword)) 
         { 
-            return BadRequest("Новый пароль отсутствует"); 
+            return BadRequest(new { message = "Обязательное поле для заполнения пропущено" }); 
         }
         using (DBC db = new(_configuration))
         {
             var user = db.Users.FirstOrDefault(x => x.Id == index);
             if (user == null)
             {
-                return NotFound(new { message = "Пользователь не найден" });
+                return NotFound(new { message = "Пользователь не существует" });
             }
             user.Password = Hash(newPassword);
             db.SaveChanges();
@@ -92,21 +92,21 @@ public class UserController : ControllerBase
     /// Для быстрого удаления во время проверки, а не через консоль
     /// </remarks>
     /// <response code="400">Некорректно введенные данные</response>
-    /// <response code="404">Пользователь не найден</response>
+    /// <response code="404">Пользователь не существует</response>
     [HttpDelete]
     [Route("DeleteUserById")]
     public IActionResult DeleteUserById([FromQuery][Required] int index) 
     {
         if (index <= 0) 
         {
-            return BadRequest(new { message = "Индекс должен быть больше нуля" });
+            return BadRequest(new { message = "Индекс меньше нуля" });
         }
         using (DBC db = new(_configuration))
         {
             var user = db.Users.FirstOrDefault(x => x.Id == index);
             if (user == null)
             {
-                return NotFound(new { message = "Пользоваетелей с заданным индексом не существует" });
+                return NotFound(new { message = "Пользователь не существует" });
             }
             db.Users.Remove(user);
             db.SaveChanges();

@@ -33,7 +33,9 @@ public class TokenController : ControllerBase
     /// <remarks>
     /// Возвращает айдишник пользователя
     /// </remarks>
-    /// <response code="404">Токен отсутствует</response>
+    /// <response code="400">Некорректные данные о токене</response>
+    /// <response code="401">Время жизни токена истекло</response>
+    /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("DecodeToken")]
@@ -69,7 +71,7 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized("Токен не действителен");
+                    return Unauthorized("Время жизни токена истекло");
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
@@ -89,7 +91,7 @@ public class TokenController : ControllerBase
         catch (Exception ex)
         { 
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest("Несуществующий токен");
+            return BadRequest("Некорректные данные о токене");
         }
     }
 
@@ -99,8 +101,9 @@ public class TokenController : ControllerBase
     /// <remarks>
     /// Возвращает время жизни токена
     /// </remarks>
+    /// <response code="400">Некорректные данные о токене</response>
     /// <response code="401">Срок жизни токена истек</response>
-    /// <response code="404">Токен отсутствует</response>
+    /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("CheckTokenTime")]
@@ -113,11 +116,6 @@ public class TokenController : ControllerBase
         }
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
-        if (string.IsNullOrEmpty(token))
-        {
-            return NotFound(new { message = "Токен отсутствует" });
-        }
 
         var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
@@ -141,7 +139,7 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized("Токен не действителен");
+                    return Unauthorized("Срок жизни токена истек");
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
@@ -161,7 +159,7 @@ public class TokenController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest("Несуществующий токен");
+            return BadRequest("Некорректные данные о токене");
         }
     }
 
@@ -172,7 +170,9 @@ public class TokenController : ControllerBase
     /// <remarks>
     /// Возвращает булевое значение (есть токен или нет)
     /// </remarks>
+    /// <response code="400">Некорректные данные о токене</response>
     /// <response code="401">Время жизни токена истекло</response>
+    /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("SubmitJWT")]
@@ -208,7 +208,7 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized("Токен не действителен");
+                    return Unauthorized("Время жизни токена истекло");
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
@@ -228,7 +228,7 @@ public class TokenController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest("Несуществующий токен");
+            return BadRequest("Некорректные данные о токене");
         }
     }
 
@@ -239,7 +239,8 @@ public class TokenController : ControllerBase
     /// <remarks>
     /// Возвращает новый токен с новым временем жизни
     /// </remarks>
-    /// <response code="404">Токен отсутствует</response>
+    /// <response code="400">Некорректные данные о токене</response>
+    /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла ошибка на стороне сервера</response>
     [HttpPost]
     [Route("RefreshTokenTime")]
@@ -289,13 +290,20 @@ public class TokenController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка:{ex.Message}");
-            return BadRequest("Несуществующий токен");
+            return BadRequest("Некорректные данные о токене");
         }
     }
 
     /// <summary>
     /// Получение хеша и логина пользователя
     /// </summary>
+    /// <remarks>
+    /// Если токен действителен, то вернет айдишник пользователя
+    /// </remarks>
+    /// <response code="400">Некорректные данные о токене</response>
+    /// <response code="401">Время жизни токена истекло</response>
+    /// <response code="404">Пользователь не существует</response>
+    /// <response code="500">Во время исполенения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("GetUserData")]
     public IActionResult GetUserData([Required] string token) 
@@ -330,7 +338,7 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized("Токен не действителен");
+                    return Unauthorized("Время жизни токена истекло");
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
@@ -350,7 +358,7 @@ public class TokenController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest("Несуществующий токен");
+            return BadRequest("Некорректные данные о токене");
         }
     }
 
@@ -414,6 +422,9 @@ public class TokenController : ControllerBase
     /// <summary>
     /// Получение времени сервера
     /// </summary>
+    /// <remarks>
+    /// Возвращает текущее время на машине
+    /// </remarks>
     [HttpGet]
     [Route("GetServerTime")]
     public IActionResult GetServerTime() 

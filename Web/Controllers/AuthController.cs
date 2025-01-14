@@ -27,7 +27,6 @@ public class AuthController : ControllerBase
     /// <remarks>
     /// Выдает 2 токена для пользователя
     /// </remarks>
-    /// <response code="400">Некорректно введенные данные</response>
     /// <response code="401">Неверный логин или пароль</response>
     /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
@@ -58,7 +57,7 @@ public class AuthController : ControllerBase
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
-            return Ok(new { access = token});
+            return Ok(new { token = token});
         }
     }
 
@@ -68,7 +67,8 @@ public class AuthController : ControllerBase
     /// <remarks>
     /// Убирает у пользователя оба токена
     /// </remarks>
-    /// <response code="401">Пользователь не авторизован</response>
+    /// <response code="400">Пользователь не вошел в систему</response>
+    /// <response code="401">Время жизни токена истекло</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("Logout")]
@@ -89,13 +89,11 @@ public class AuthController : ControllerBase
         var timeRemaining = expiration - DateTime.UtcNow;
         if (timeRemaining <= TimeSpan.Zero)
         {
-            return Unauthorized(new { message = "Пользователь вышел из системы" });
+            return Unauthorized(new { message = "Время жизни токена истекло" });
         }
-
-
         if (_configuration["JWT:Token"] == "") 
         {
-            return Unauthorized("Пользователь не вошел в систему");
+            return BadRequest("Пользователь не вошел в систему");
         }
 
         Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
