@@ -102,7 +102,7 @@ public class TokenController : ControllerBase
     /// Возвращает время жизни токена
     /// </remarks>
     /// <response code="400">Некорректные данные о токене</response>
-    /// <response code="401">Срок жизни токена истек</response>
+    /// <response code="401">Время жизни токена истекло</response>
     /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
@@ -139,7 +139,7 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized("Срок жизни токена истек");
+                    return Unauthorized("Время жизни токена истекло");
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
@@ -168,7 +168,7 @@ public class TokenController : ControllerBase
     /// Подтверждение действительности токена
     /// </summary>
     /// <remarks>
-    /// Возвращает булевое значение (есть токен или нет)
+    /// Возвращает булевое значение если время токена действительно
     /// </remarks>
     /// <response code="400">Некорректные данные о токене</response>
     /// <response code="401">Время жизни токена истекло</response>
@@ -295,10 +295,10 @@ public class TokenController : ControllerBase
     }
 
     /// <summary>
-    /// Получение хеша и логина пользователя
+    /// Получение данных о пользователе
     /// </summary>
     /// <remarks>
-    /// Если токен действителен, то вернет айдишник пользователя
+    /// Возвращает хэш и логин пользователя
     /// </remarks>
     /// <response code="400">Некорректные данные о токене</response>
     /// <response code="401">Время жизни токена истекло</response>
