@@ -232,7 +232,6 @@ public class TokenController : ControllerBase
         }
     }
 
-
     /// <summary>
     /// Обновление времени жизни токена
     /// </summary>
