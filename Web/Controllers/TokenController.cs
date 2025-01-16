@@ -206,16 +206,12 @@ public class TokenController : ControllerBase
             // Проверка наличия пользователя в базе данных
             using (DBC db = new DBC(_configuration))
             {
-                if (token != _configuration["JWT:Token"])
-                {
-                    return Unauthorized("Время жизни токена истекло");
-                }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло" });
+                    return Ok(new { message = -1});
                 }
                 var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
                 if (user == null)

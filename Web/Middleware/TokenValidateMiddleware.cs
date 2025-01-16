@@ -6,7 +6,8 @@ namespace AuthService.Middleware
 {
     public class TokenValidateMiddleware
     {
-        private readonly RequestDelegate _next; public TokenValidateMiddleware(RequestDelegate next) { _next = next; }
+        private readonly RequestDelegate _next;
+        public TokenValidateMiddleware(RequestDelegate next) { _next = next; }
         public async Task InvokeAsync(HttpContext context) 
         {
             var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
