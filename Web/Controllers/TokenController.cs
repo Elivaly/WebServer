@@ -163,71 +163,6 @@ public class TokenController : ControllerBase
         }
     }
 
-
-    /// <summary>
-    /// Подтверждение действительности токена
-    /// </summary>
-    /// <remarks>
-    /// Возвращает булевое значение если время токена действительно
-    /// </remarks>
-    /// <response code="400">Некорректные данные о токене</response>
-    /// <response code="401">Время жизни токена истекло</response>
-    /// <response code="404">Пользователь не существует</response>
-    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
-    [HttpGet]
-    [Route("SubmitJWT")]
-    public IActionResult SubmitJWT([Required]string token) 
-    {
-        if (HttpContext == null)
-        {
-            Console.WriteLine("HttpContext is null");
-            return StatusCode(500, "Internal server error: HttpContext is null");
-        }
-        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
-        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
-        var handler = new JwtSecurityTokenHandler();
-        try
-        {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _configuration["JWT:Issuer"],
-                ValidAudience = _configuration["JWT:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(key)
-            };
-            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-            var jwt = validatedToken as JwtSecurityToken;
-            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
-            // Проверка наличия пользователя в базе данных
-            using (DBC db = new DBC(_configuration))
-            {
-                var expiration = jwt.ValidTo;
-                var timeRemaining = expiration - DateTime.UtcNow;
-                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
-                if (timeRemainingMilliSeconds < 0)
-                {
-                    return Ok(new { message = -1});
-                }
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
-                if (user == null)
-                {
-                    return NotFound("Пользователь не существует");
-                }
-                return Ok(true);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest("Некорректные данные о токене");
-        }
-    }
-
     /// <summary>
     /// Обновление времени жизни токена
     /// </summary>
@@ -357,6 +292,85 @@ public class TokenController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Получение времени сервера
+    /// </summary>
+    /// <remarks>
+    /// Возвращает текущее время на машине
+    /// </remarks>
+    [HttpGet]
+    [Route("GetServerTime")]
+    public IActionResult GetServerTime()
+    {
+        var time = DateTime.Now;
+        return Ok(new { ServerTime = time });
+    }
+
+    /// <summary>
+    /// Подтверждение действительности токена
+    /// </summary>
+    /// <remarks>
+    /// Возвращает булевое значение если время токена действительно
+    /// </remarks>
+    /// <response code="400">Некорректные данные о токене</response>
+    /// <response code="401">Время жизни токена истекло</response>
+    /// <response code="404">Пользователь не существует</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
+    [HttpGet]
+    [Route("SubmitJWT")]
+    [Obsolete]
+    public IActionResult SubmitJWT([Required] string token)
+    {
+        if (HttpContext == null)
+        {
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
+        var handler = new JwtSecurityTokenHandler();
+        try
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var jwt = validatedToken as JwtSecurityToken;
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration))
+            {
+                var expiration = jwt.ValidTo;
+                var timeRemaining = expiration - DateTime.UtcNow;
+                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+                if (timeRemainingMilliSeconds < 0)
+                {
+                    return Ok(new { message = -1 });
+                }
+                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound("Пользователь не существует");
+                }
+                return Ok(true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            return BadRequest("Некорректные данные о токене");
+        }
+    }
+
 
     private ClaimsPrincipal GetDataFromExpiredToken(string token)
     {
@@ -412,20 +426,5 @@ public class TokenController : ControllerBase
 
         return (tokenString);
     }
-
-
-    /// <summary>
-    /// Получение времени сервера
-    /// </summary>
-    /// <remarks>
-    /// Возвращает текущее время на машине
-    /// </remarks>
-    [HttpGet]
-    [Route("GetServerTime")]
-    public IActionResult GetServerTime() 
-    {
-        var time = DateTime.Now;
-        return Ok(new { ServerTime = time });
-    } 
 
 }
