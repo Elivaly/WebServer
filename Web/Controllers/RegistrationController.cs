@@ -59,7 +59,7 @@ public class RegistrationController : ControllerBase
                 return BadRequest(new { message = "Пустая строка" });
             }
 
-            if (SpaceCheck(name) || SpaceCheck(password))
+            if (SpaceCheck(name) || SpaceCheck(user.Password))
             {
                 return BadRequest(new { message = "В одной из строк содержатся пробелы" });
             }

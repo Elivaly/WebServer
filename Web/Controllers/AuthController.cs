@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using AuthService.Schems;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Xml.Linq;
+using System.Text.RegularExpressions;
 
 namespace AuthService.Controllers;
 
@@ -27,6 +29,7 @@ public class AuthController : ControllerBase
     /// <remarks>
     /// Выдает 2 токена для пользователя
     /// </remarks>
+    /// <response code="400">Некорректные данные</response>
     /// <response code="401">Неверный логин или пароль</response>
     /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
@@ -42,6 +45,28 @@ public class AuthController : ControllerBase
         }
         Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+        #region ValidateChekers
+        if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
+        {
+            return BadRequest(new { message = "Пустая строка" });
+        }
+
+        if (SpaceCheck(user.Name) || SpaceCheck(user.Password))
+        {
+            return BadRequest(new { message = "В одной из строк содержатся пробелы" });
+        }
+
+        if (SpecialSymbolCheck(user.Name))
+        {
+            return BadRequest(new { message = "В имени пользователя содержатся специальные символы" });
+        }
+
+        if (DashCheck(user.Name))
+        {
+            return BadRequest(new { message = "В имени пользователя содержится тире" });
+        }
+        #endregion
 
         using (DBC db = new (_configuration)) 
         {
@@ -132,5 +157,26 @@ public class AuthController : ControllerBase
         byte[] result = sha.ComputeHash(data);
         password = Convert.ToBase64String(result);
         return password;
+    }
+
+    private bool SpaceCheck(string str) // проверка на наличие пробела в строке 
+    {
+        bool checker = false;
+        if (str.Contains(" ")) checker = true;
+        return checker;
+    }
+    private bool SpecialSymbolCheck(string str)
+    {
+        bool checker = false;
+        string pattern = @"[!@#$%^&*(),.?\"":{}|<>`~/=_+'№;]";
+        Regex regex = new Regex(pattern);
+        if (regex.IsMatch(str)) checker = true;
+        return checker;
+    }
+    private bool DashCheck(string str)
+    {
+        bool checker = false;
+        if (str.Contains("-")) checker = true;
+        return checker;
     }
 }
