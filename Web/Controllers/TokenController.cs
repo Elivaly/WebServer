@@ -139,14 +139,14 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло", , StatusCode = StatusCode(401) });
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Ok(new { timeRemaining = -1});
+                    return Ok(new { timeRemaining = -1, StatusCode = StatusCode(200)});
                 }
                 var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
                 if (user == null)
