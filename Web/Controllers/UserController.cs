@@ -46,9 +46,9 @@ public class UserController : ControllerBase
         }
         if (users == null || users.Count == 0)
         {
-            return NotFound(new { message = "Пользовательские данные отсутствуют" }); 
+            return NotFound(new { message = "Пользовательские данные отсутствуют", StatusCode = StatusCode(404) }); 
         }
-        return Ok( new { Users =  users });
+        return Ok( new { Users =  users, StatusCode = StatusCode(200) });
     }
 
     /// <summary>
@@ -65,24 +65,24 @@ public class UserController : ControllerBase
     {
         if (index <= 0) 
         {
-            return BadRequest(new { message = "Индекс меньше нуля" });
+            return BadRequest(new { message = "Индекс меньше нуля", StatusCode = StatusCode(400) });
         }
         if (string.IsNullOrEmpty(newPassword)) 
         { 
-            return BadRequest(new { message = "Обязательное поле для заполнения пропущено" }); 
+            return BadRequest(new { message = "Обязательное поле для заполнения пропущено", StatusCode = StatusCode(400) }); 
         }
         using (DBC db = new(_configuration))
         {
             var user = db.Users.FirstOrDefault(x => x.Id == index);
             if (user == null)
             {
-                return NotFound(new { message = "Пользователь не существует" });
+                return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
             }
             user.Password = Hash(newPassword);
             db.SaveChanges();
         }
 
-        return Ok( new {message =  "Пароль был изменен"});
+        return Ok( new {message =  "Пароль был изменен", StatusCode = StatusCode(200) });
     }
 
     /// <summary>
@@ -99,19 +99,19 @@ public class UserController : ControllerBase
     {
         if (index <= 0) 
         {
-            return BadRequest(new { message = "Индекс меньше нуля" });
+            return BadRequest(new { message = "Индекс меньше нуля", StatusCode = StatusCode(400) });
         }
         using (DBC db = new(_configuration))
         {
             var user = db.Users.FirstOrDefault(x => x.Id == index);
             if (user == null)
             {
-                return NotFound(new { message = "Пользователь не существует" });
+                return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
             }
             db.Users.Remove(user);
             db.SaveChanges();
         }
-        return Ok( new { message = "Пользователь был удален" });
+        return Ok( new { message = "Пользователь был удален", StatusCode = StatusCode(200) });
     }
     private string Hash(string password)
     {

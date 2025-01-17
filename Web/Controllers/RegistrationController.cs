@@ -56,29 +56,29 @@ public class RegistrationController : ControllerBase
             #region ValidateChekers
             if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
             {
-                return BadRequest(new { message = "Пустая строка" });
+                return BadRequest(new { message = "Пустая строка", StatusCode = StatusCode(400) });
             }
 
             if (SpaceCheck(name) || SpaceCheck(user.Password))
             {
-                return BadRequest(new { message = "В одной из строк содержатся пробелы" });
+                return BadRequest(new { message = "В одной из строк содержатся пробелы", StatusCode = StatusCode(400) });
             }
 
             if (SpecialSymbolCheck(name))
             {
-                return BadRequest(new { message = "В имени пользователя содержатся специальные символы" });
+                return BadRequest(new { message = "В имени пользователя содержатся специальные символы", StatusCode = StatusCode(400) });
             }
 
             if (DashCheck(name))
             {
-                return BadRequest(new { message = "В имени пользователя содержится тире" });
+                return BadRequest(new { message = "В имени пользователя содержится тире", StatusCode = StatusCode(400) });
             }
             #endregion
 
             var existingUser = db.Users.FirstOrDefault(u => u.Name == user.Name);
             if (existingUser != null)
             {
-                return Unauthorized(new { message = "Пользователь с таким логином уже существует" });
+                return Unauthorized(new { message = "Пользователь с таким логином уже существует", StatusCode = StatusCode(401) });
             }
 
             db.Users.Add(user);
@@ -90,7 +90,7 @@ public class RegistrationController : ControllerBase
             _configuration["JWT:Token"] = token;
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
-            return Ok(new { access = token});
+            return Ok(new { access = token, StatusCode = StatusCode(200)});
         }
     }
     private string GenerateJwtToken(User user)

@@ -49,22 +49,22 @@ public class AuthController : ControllerBase
         #region ValidateChekers
         if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
         {
-            return BadRequest(new { message = "Пустая строка" });
+            return BadRequest(new { message = "Пустая строка", StatusCode = StatusCode(400) });
         }
 
         if (SpaceCheck(user.Name) || SpaceCheck(user.Password))
         {
-            return BadRequest(new { message = "В одной из строк содержатся пробелы" });
+            return BadRequest(new { message = "В одной из строк содержатся пробелы", StatusCode = StatusCode(400) });
         }
 
         if (SpecialSymbolCheck(user.Name))
         {
-            return BadRequest(new { message = "В имени пользователя содержатся специальные символы" });
+            return BadRequest(new { message = "В имени пользователя содержатся специальные символы", StatusCode = StatusCode(400) });
         }
 
         if (DashCheck(user.Name))
         {
-            return BadRequest(new { message = "В имени пользователя содержится тире" });
+            return BadRequest(new { message = "В имени пользователя содержится тире", StatusCode = StatusCode(400) });
         }
         #endregion
 
@@ -74,7 +74,7 @@ public class AuthController : ControllerBase
             var existingUser = db.Users.FirstOrDefault(u => u.Name == user.Name && u.Password == user.Password);
             if (existingUser == null)
             {
-                return Unauthorized(new { message = "Неверный логин или пароль" });
+                return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = StatusCode(401) });
             }
             var token = GenerateJwtToken(existingUser);
             _configuration["JWT:Token"]=token;
@@ -82,7 +82,7 @@ public class AuthController : ControllerBase
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
-            return Ok(new { token = token});
+            return Ok(new { token = token, StatusCode = StatusCode(200)});
         }
     }
 
@@ -114,17 +114,17 @@ public class AuthController : ControllerBase
         var timeRemaining = expiration - DateTime.UtcNow;
         if (timeRemaining <= TimeSpan.Zero)
         {
-            return Unauthorized(new { message = "Время жизни токена истекло" });
+            return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
         }
         if (_configuration["JWT:Token"] == "") 
         {
-            return BadRequest("Пользователь не вошел в систему");
+            return BadRequest(new { message = "Пользователь не вошел в систему", StatusCode = StatusCode(400) });
         }
 
         Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         HttpContext.Response.Cookies.Delete("jwtToken");
         _configuration["JWT:Token"] = "";
-        return Ok(new { message = "Пользователь вышел из системы" }); 
+        return Ok(new { message = "Пользователь вышел из системы", StatusCode = StatusCode(200) }); 
     }
 
     private string GenerateJwtToken(User user)
