@@ -49,6 +49,7 @@ public class RegistrationController : ControllerBase
         using (var db = new DBC(_configuration))
         {
             var password = Hash(user.Password);
+            user.Password = password;
             user.Date_Create = DateOnly.FromDateTime(DateTime.Now);
             user.ID_Role = 2;
             #region ValidateChekers
