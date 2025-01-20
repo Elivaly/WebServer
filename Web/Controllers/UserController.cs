@@ -42,7 +42,7 @@ public class UserController : ControllerBase
         List<User> users = new List<User>(); 
         using (DBC db = new(_configuration)) 
         { 
-            users = db.Users.OrderBy(x => x.Id).ToList(); 
+            users = db.Users.OrderBy(x => x.ID).ToList(); 
         }
         if (users == null || users.Count == 0)
         {
@@ -73,7 +73,7 @@ public class UserController : ControllerBase
         }
         using (DBC db = new(_configuration))
         {
-            var user = db.Users.FirstOrDefault(x => x.Id == index);
+            var user = db.Users.FirstOrDefault(x => x.ID == index);
             if (user == null)
             {
                 return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
@@ -103,7 +103,7 @@ public class UserController : ControllerBase
         }
         using (DBC db = new(_configuration))
         {
-            var user = db.Users.FirstOrDefault(x => x.Id == index);
+            var user = db.Users.FirstOrDefault(x => x.ID == index);
             if (user == null)
             {
                 return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });

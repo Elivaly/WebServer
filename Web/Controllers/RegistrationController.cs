@@ -48,34 +48,32 @@ public class RegistrationController : ControllerBase
 
         using (var db = new DBC(_configuration))
         {
-            var name = user.Name;
             var password = Hash(user.Password);
-            user.Password = password;
-            user.DateCreate = DateOnly.FromDateTime(DateTime.Now);
-
+            user.Date_Create = DateOnly.FromDateTime(DateTime.Now);
+            user.ID_Role = 2;
             #region ValidateChekers
-            if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
+            if (string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password))
             {
                 return BadRequest(new { message = "Пустая строка", StatusCode = StatusCode(400) });
             }
 
-            if (SpaceCheck(name) || SpaceCheck(user.Password))
+            if (SpaceCheck(user.Username) || SpaceCheck(user.Password))
             {
                 return BadRequest(new { message = "В одной из строк содержатся пробелы", StatusCode = StatusCode(400) });
             }
 
-            if (SpecialSymbolCheck(name))
+            if (SpecialSymbolCheck(user.Username))
             {
                 return BadRequest(new { message = "В имени пользователя содержатся специальные символы", StatusCode = StatusCode(400) });
             }
 
-            if (DashCheck(name))
+            if (DashCheck(user.Username))
             {
                 return BadRequest(new { message = "В имени пользователя содержится тире", StatusCode = StatusCode(400) });
             }
             #endregion
 
-            var existingUser = db.Users.FirstOrDefault(u => u.Name == user.Name);
+            var existingUser = db.Users.FirstOrDefault(u => u.Username == user.Username);
             if (existingUser != null)
             {
                 return Unauthorized(new { message = "Пользователь с таким логином уже существует", StatusCode = StatusCode(401) });
@@ -105,7 +103,7 @@ public class RegistrationController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString())
+            new Claim(JwtRegisteredClaimNames.Sub, user.ID.ToString())
         };
         var token = new JwtSecurityToken(
             issuer: _configuration["JWT:Issuer"],

@@ -80,12 +80,12 @@ public class TokenController : ControllerBase
                 {
                     return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
                 }
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
                     return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
                 }
-                return Ok(new { ID = user.Id, StatusCode = StatusCode(200) });
+                return Ok(new { ID = user.ID, StatusCode = StatusCode(200) });
             }
         } 
         catch (Exception ex)
@@ -148,7 +148,7 @@ public class TokenController : ControllerBase
                 {
                     return Ok(new { timeRemaining = -1, StatusCode = StatusCode(200)});
                 }
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
                     return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
@@ -204,7 +204,7 @@ public class TokenController : ControllerBase
             // Проверка наличия пользователя в базе данных
             using (DBC db = new DBC(_configuration))
             {
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
                     return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
@@ -277,12 +277,12 @@ public class TokenController : ControllerBase
                 {
                     return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
                 }
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
                     return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
                 }
-                return Ok(new {username = user.Name, passwordHash = user.Password, StatusCode = StatusCode(200) });
+                return Ok(new {username = user.Username, passwordHash = user.Password, StatusCode = StatusCode(200) });
             }
         }
         catch (Exception ex)
@@ -356,7 +356,7 @@ public class TokenController : ControllerBase
                 {
                     return Ok(new { message = -1, StatusCode = StatusCode(200) });
                 }
-                var user = db.Users.FirstOrDefault(u => u.Id == int.Parse(id));
+                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
                     return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });

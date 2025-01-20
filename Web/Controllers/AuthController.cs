@@ -47,22 +47,22 @@ public class AuthController : ControllerBase
         Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
         #region ValidateChekers
-        if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Password))
+        if (string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password))
         {
             return BadRequest(new { message = "Пустая строка", StatusCode = StatusCode(400) });
         }
 
-        if (SpaceCheck(user.Name) || SpaceCheck(user.Password))
+        if (SpaceCheck(user.Username) || SpaceCheck(user.Password))
         {
             return BadRequest(new { message = "В одной из строк содержатся пробелы", StatusCode = StatusCode(400) });
         }
 
-        if (SpecialSymbolCheck(user.Name))
+        if (SpecialSymbolCheck(user.Username))
         {
             return BadRequest(new { message = "В имени пользователя содержатся специальные символы", StatusCode = StatusCode(400) });
         }
 
-        if (DashCheck(user.Name))
+        if (DashCheck(user.Username))
         {
             return BadRequest(new { message = "В имени пользователя содержится тире", StatusCode = StatusCode(400) });
         }
@@ -71,7 +71,7 @@ public class AuthController : ControllerBase
         using (DBC db = new (_configuration)) 
         {
             user.Password = Hash(user.Password);
-            var existingUser = db.Users.FirstOrDefault(u => u.Name == user.Name && u.Password == user.Password);
+            var existingUser = db.Users.FirstOrDefault(u => u.Username == user.Username && u.Password == user.Password);
             if (existingUser == null)
             {
                 return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = StatusCode(401) });
@@ -138,7 +138,7 @@ public class AuthController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
         var claims = new List<Claim>() 
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString())
+            new Claim(JwtRegisteredClaimNames.Sub, user.ID.ToString())
         };
         var token = new JwtSecurityToken( 
             issuer: _configuration["JWT:Issuer"],
