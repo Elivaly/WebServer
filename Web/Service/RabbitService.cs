@@ -20,27 +20,29 @@ public class RabbitService : IRabbitService
         SendMessage(message);
     }
 
-    public async void SendMessage(string message)
+    public void SendMessage(string message)
     {
-        // Не забудьте вынести значения "localhost" и "MyQueue"
-        // в файл конфигурации
-        var factory = new ConnectionFactory() { HostName = _configuration["ApplicationHost:Address"] };
-        using (var connection = await factory.CreateConnectionAsync())
+        var factory = new ConnectionFactory() 
         {
-            using (var channel = await connection.CreateModel())
+            HostName = _configuration["RabbitMQ:Host"]
+        };
+
+        using (var connection = factory.CreateConnection()) 
+        {
+            using (var channel = connection.CreateModel()) 
             {
-                channel.QueueDeclare(queue: "MyQueue",
-                               durable: false,
-                               exclusive: false,
-                               autoDelete: false,
-                               arguments: null);
+                channel.QueueDeclare(queue: _configuration["RabbitMQ:Queue"],
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
 
                 var body = Encoding.UTF8.GetBytes(message);
 
                 channel.BasicPublish(exchange: "",
-                               routingKey: "MyQueue",
-                               basicProperties: null,
-                               body: body);
+                    routingKey: _configuration["RabbitMQ:Queue"],
+                    basicProperties: null,
+                    body: body);
             }
         }
     }

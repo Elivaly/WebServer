@@ -9,6 +9,8 @@ using Microsoft.OpenApi.Models;
 using AuthService.Exceptions;
 using AuthService.Middleware;
 using System.Reflection;
+using AuthService.Interface;
+using AuthService.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +102,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IRabbitService, RabbitService>();
 
 var app = builder.Build();
 
