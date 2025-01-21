@@ -44,6 +44,7 @@ public class RabbitService : IRabbitService
                     basicProperties: null,
                     body: body);
             }
+            connection.Close();
         }
     }
 

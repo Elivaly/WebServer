@@ -55,7 +55,7 @@ public class UserController : ControllerBase
     /// Изменение пароля пользователя по ID
     /// </summary>
     /// <remarks>
-    /// Для изменения существующего пароля, на случай если забылся старый. Все пароли захешированы
+    /// Для изменения существующего пароля, на случай если забылся старый.
     /// </remarks>
     /// <response code="400">Некорректные данные</response>
     /// <response code="404">Пользователь не существует</response>
@@ -88,9 +88,6 @@ public class UserController : ControllerBase
     /// <summary>
     /// Удаление пользователя по ID
     /// </summary>
-    /// <remarks>
-    /// Для быстрого удаления во время проверки, а не через консоль
-    /// </remarks>
     /// <response code="400">Некорректно введенные данные</response>
     /// <response code="404">Пользователь не существует</response>
     [HttpDelete]

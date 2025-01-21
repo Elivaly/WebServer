@@ -1,4 +1,5 @@
-﻿using AuthService.Interface;
+﻿using AuthService.Handler;
+using AuthService.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,12 +16,18 @@ public class RabbitController : Controller
         _rabbitService = rabbitService;
     }
 
+    /// <summary>
+    /// Отправить сообщение (в разработке)
+    /// </summary>
+    /// <remarks>
+    /// Отсылает сообщение в очередь
+    /// </remarks>
     [Route("[action]")]
     [HttpGet]
     public IActionResult SendMessage(string message) 
     {
         _rabbitService.SendMessage(message);
 
-        return Ok(new { message = "Сообщение отправлено"});
+        return Ok(new { message = "Сообщение отправлено" });
     }
 }

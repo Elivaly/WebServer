@@ -27,7 +27,7 @@ public class AuthController : ControllerBase
     /// Вход по логин-паролю
     /// </summary>
     /// <remarks>
-    /// Выдает 2 токена для пользователя
+    /// Выдает пользователю токен
     /// </remarks>
     /// <response code="400">Некорректные данные</response>
     /// <response code="401">Неверный логин или пароль</response>
@@ -90,7 +90,7 @@ public class AuthController : ControllerBase
     /// Выход из аккаунта
     /// </summary>
     /// <remarks>
-    /// Убирает у пользователя оба токена
+    /// Обнуляет токен пользователя
     /// </remarks>
     /// <response code="400">Пользователь не вошел в систему</response>
     /// <response code="401">Время жизни токена истекло</response>

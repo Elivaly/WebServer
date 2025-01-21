@@ -167,7 +167,7 @@ public class TokenController : ControllerBase
     /// Обновление времени жизни токена
     /// </summary>
     /// <remarks>
-    /// Возвращает новый токен с новым временем жизни
+    /// Возвращает токен с обновленным временем жизни
     /// </remarks>
     /// <response code="400">Некорректные данные о токене</response>
     /// <response code="404">Пользователь не существует</response>
@@ -309,9 +309,6 @@ public class TokenController : ControllerBase
     /// <summary>
     /// Подтверждение действительности токена
     /// </summary>
-    /// <remarks>
-    /// Возвращает булевое значение если время токена действительно
-    /// </remarks>
     /// <response code="400">Некорректные данные о токене</response>
     /// <response code="401">Время жизни токена истекло</response>
     /// <response code="404">Пользователь не существует</response>
