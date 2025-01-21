@@ -15,7 +15,7 @@ public class RabbitController : Controller
         _rabbitService = rabbitService;
     }
 
-    [Route("[action]/{message}")]
+    [Route("[action]")]
     [HttpGet]
     public IActionResult SendMessage(string message) 
     {
