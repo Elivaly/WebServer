@@ -30,7 +30,7 @@ public class RabbitListenerService : IRabbitListenerService
         _channel = _connection.CreateModel();
         _channel.QueueDeclare(
             queue: _configuration["RabbitMQ:Queue"],
-            durable: true,
+            durable: false,
             exclusive: false,
             autoDelete: false,
             arguments: null);
@@ -45,15 +45,11 @@ public class RabbitListenerService : IRabbitListenerService
             var message = Encoding.UTF8.GetString(body);
             Console.WriteLine("[x] Получено {0}",message);
         };
+
         _channel.BasicConsume(
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: consumer);
-    }
-
-    public void ListenQueue() 
-    {
-        ListenQueue(null);
     }
 
 }

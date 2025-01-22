@@ -32,7 +32,7 @@ public class RabbitSenderService : IRabbitSenderService
         _channel = _connection.CreateModel();
         _channel.QueueDeclare(
             queue: _configuration["RabbitMQ:Queue"],
-            durable: true,
+            durable: false,
             exclusive: false,
             autoDelete: false,
             arguments: null);

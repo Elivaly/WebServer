@@ -26,7 +26,7 @@ public class RabbitListenerController : Controller
     [HttpGet]
     public IActionResult ReceiveMessage() 
     {
-        _rabbitListenerService.ListenQueue();
+        _rabbitListenerService.ListenQueue(_configuration);
          return Ok("Прослушивается очередь...");
     }
 }
