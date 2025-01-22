@@ -7,13 +7,15 @@ namespace AuthService.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class RabbitController : Controller
+public class RabbitSenderController : Controller
 {
-    private readonly IRabbitService _rabbitService;
+    private readonly IRabbitSenderService _rabbitService;
+    private readonly IConfiguration _configuration;
 
-    public RabbitController(IRabbitService rabbitService)
+    public RabbitSenderController(IRabbitSenderService rabbitService, IConfiguration configuration)
     {
         _rabbitService = rabbitService;
+        _configuration = configuration;
     }
 
     /// <summary>

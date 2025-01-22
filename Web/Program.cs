@@ -102,7 +102,8 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IRabbitService, RabbitService>();
+builder.Services.AddScoped<IRabbitSenderService, RabbitSenderService>();
+builder.Services.AddScoped<IRabbitListenerService, RabbitListenerService>();
 
 var app = builder.Build();
 

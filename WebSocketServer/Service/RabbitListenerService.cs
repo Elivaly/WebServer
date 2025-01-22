@@ -15,9 +15,6 @@ public class RabbitListenerService : BackgroundService
     IConfiguration _configuration;
     public RabbitListenerService(IConfiguration configuration)
     {
-        
-        // Не забудьте вынести значения "localhost" и "MyQueue"
-        // в файл конфигурации
         _configuration = configuration;
         var factory = new ConnectionFactory { HostName = _configuration["RabbitMQ:Host"] };
         _connection = factory.CreateConnection();
@@ -38,8 +35,8 @@ public class RabbitListenerService : BackgroundService
         {
             var content = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-            // Каким-то образом обрабатываем полученное сообщение
             Debug.WriteLine($"Получено сообщение: {content}");
+            Console.WriteLine(content);
 
             _channel.BasicAck(ea.DeliveryTag, false);
         };

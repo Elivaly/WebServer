@@ -7,5 +7,5 @@ namespace WebSocketServer.Controllers;
 [ApiController]
 public class RabbitController : Controller
 {
-    
+
 }
