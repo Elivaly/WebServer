@@ -36,7 +36,7 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
 
-var key = builder.Configuration["Jwt:Key"];
+var key = builder.Configuration["JWT:Key"];
 if (string.IsNullOrEmpty(key))
 { 
     throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty."); 
@@ -120,4 +120,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run(builder.Configuration["ApplicationHost:Address"]);
-
