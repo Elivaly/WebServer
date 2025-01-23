@@ -13,13 +13,11 @@ public class RabbitListenerService : IRabbitListenerService
     private readonly IConfiguration _configuration;
     private IConnection _connection;
     private IModel _channel;
-    private ILogger _logger;
     bool _isDisposed;
     public RabbitListenerService(IConfiguration configuration, ILogger logger)
     {
         _configuration = configuration;
         Initialize();
-        _logger = logger;
     }
 
     public void Initialize() 
@@ -65,7 +63,6 @@ public class RabbitListenerService : IRabbitListenerService
         {
             _channel.Close();
         }
-
         _isDisposed = true;
     }
 

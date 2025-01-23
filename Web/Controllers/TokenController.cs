@@ -303,7 +303,7 @@ public class TokenController : ControllerBase
     public IActionResult GetServerTime()
     {
         var time = DateTime.Now;
-        return Ok(new { ServerTime = time, StatusCode = StatusCode(200) });
+        return Ok(new { ServerTime = time.ToString(), StatusCode = StatusCode(200) });
     }
 
     /// <summary>
