@@ -1,11 +1,20 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebSocketServer.Service;
 
 namespace WebSocketServer.Controllers;
 
 [Route("/api/[controller]")]
+[ApiController]
 public class ListenerController : Controller
 {
+    IConfiguration _configuration;
+    
+    public ListenerController(IConfiguration configuration) 
+    {
+        _configuration = configuration;
+    }
+
     /// <summary>
     /// Прослушать очередь
     /// </summary>

@@ -10,6 +10,7 @@ public class DBC : DbContext
 {
     public DbContext context;
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Message> Messages { get; set; } = null!;
 
     private IConfiguration _configuration;
     public DBC(IConfiguration config)
@@ -19,7 +20,6 @@ public class DBC : DbContext
         NpgsqlConnection sqlConnection = new NpgsqlConnection(connectionString);
     }
       
-
     public DBC(DbContextOptions<DBC> options,IConfiguration config) : base(options) 
     {
         _configuration = config;
