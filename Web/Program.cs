@@ -14,7 +14,7 @@ using AuthService.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Настройка CORS
+// CORS Policy
 builder.Services.AddCors(options => 
 { options.AddPolicy("AllowAll", builder => 
     { 
@@ -24,11 +24,11 @@ builder.Services.AddCors(options =>
     }); 
 });
 
-// Регистрация DbContext
+// Registrate context
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
 builder.Services.AddDbContext<DBC>(options => options.UseNpgsql(connectionString));
 
-// Попытка вернуть куки
+//Config cookie
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -42,7 +42,7 @@ if (string.IsNullOrEmpty(key))
     throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty."); 
 }
 
-// Добавление аутентификации и JWT
+// JWT settings
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

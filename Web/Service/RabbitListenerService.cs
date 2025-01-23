@@ -1,7 +1,10 @@
-﻿using System.Text;
+﻿using System.Runtime.CompilerServices;
+using System.Text;
 using AuthService.Interface;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Windows.Graphics.Printing.PrintSupport;
+using System;
 
 namespace AuthService.Service;
 
@@ -10,11 +13,13 @@ public class RabbitListenerService : IRabbitListenerService
     private readonly IConfiguration _configuration;
     private IConnection _connection;
     private IModel _channel;
-
-    public RabbitListenerService(IConfiguration configuration) 
+    private ILogger _logger;
+    bool _isDisposed;
+    public RabbitListenerService(IConfiguration configuration, ILogger logger)
     {
         _configuration = configuration;
         Initialize();
+        _logger = logger;
     }
 
     public void Initialize() 
@@ -23,7 +28,7 @@ public class RabbitListenerService : IRabbitListenerService
         {
             HostName = _configuration["RabbitMQ:Host"],
             UserName = _configuration["RabbitMQ:User"],
-            Password = _configuration["RabbitMQ:Password"],
+            Password = _configuration["RabbitMQ:Password"]
         };
 
         _connection = factory.CreateConnection();
@@ -36,20 +41,32 @@ public class RabbitListenerService : IRabbitListenerService
             arguments: null);
     }
 
-    public void ListenQueue(Object obj) 
+    public void ListenQueue(Object obj)
     {
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received += (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
-            Console.WriteLine("[x] Получено {0}",message);
+            Console.WriteLine("[x] Получено {0}", message);
         };
 
         _channel.BasicConsume(
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: consumer);
+    }
+
+    public void Dispose(bool disposing)
+    {
+        if (_isDisposed) return;
+
+        if (disposing) 
+        {
+            _channel.Close();
+        }
+
+        _isDisposed = true;
     }
 
 }

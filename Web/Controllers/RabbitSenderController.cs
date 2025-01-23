@@ -30,6 +30,11 @@ public class RabbitSenderController : Controller
     {
         _rabbitService.SendMessage(message);
 
+        using (DBC db = new DBC(_configuration)) 
+        {
+                
+        }
+
         return Ok(new { message = "Сообщение отправлено" });
     }
 }

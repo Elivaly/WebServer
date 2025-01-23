@@ -16,14 +16,7 @@ public class RabbitListenerService : BackgroundService
     public RabbitListenerService(IConfiguration configuration)
     {
         _configuration = configuration;
-        var factory = new ConnectionFactory { HostName = _configuration["RabbitMQ:Host"] };
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _channel.QueueDeclare(queue: _configuration["RabbitMQ:Queue"],
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
+        Initialize();
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,10 +39,46 @@ public class RabbitListenerService : BackgroundService
         return Task.CompletedTask;
     }
 
-    public override void Dispose()
+    public void Initialize()
+    {
+        var factory = new ConnectionFactory()
+        {
+            HostName = _configuration["RabbitMQ:Host"],
+            UserName = _configuration["RabbitMQ:User"],
+            Password = _configuration["RabbitMQ:Password"]
+        };
+
+        _connection = factory.CreateConnection();
+        _channel = _connection.CreateModel();
+        _channel.QueueDeclare(
+            queue: _configuration["RabbitMQ:Queue"],
+            durable: false,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
+    }
+
+    public void ListenQueue(Object obj)
+    {
+        var consumer = new EventingBasicConsumer(_channel);
+        consumer.Received += (model, ea) =>
+        {
+            var body = ea.Body.ToArray();
+            var message = Encoding.UTF8.GetString(body);
+            Console.WriteLine("[x] Получено {0}", message);
+        };
+
+        _channel.BasicConsume(
+            queue: _configuration["RabbitMQ:Queue"],
+            autoAck: true,
+            consumer: consumer);
+    }
+
+    public void Dispose(bool disposing)
     {
         _channel.Close();
         _connection.Close();
         base.Dispose();
     }
+
 }
