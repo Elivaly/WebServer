@@ -1,0 +1,13 @@
+﻿using System.Net;
+
+namespace WebSocketServer.Interface;
+
+public interface ISocketService
+{
+    void Accept(); // для принятия входящего подключения
+    void Listen(IPAddress adress, int port); // прослушивание на наличие подключений
+    void Connect(string url, int port); // соединение с сервисом
+    void Dispose(); // закрытие сокета
+    IPEndPoint CreateEndPoint(); // создает конечную точку для привязки
+    void Bind(IPEndPoint endPoint);
+}
