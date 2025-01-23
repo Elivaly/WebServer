@@ -1,4 +1,4 @@
-﻿namespace AuthService.Interface;
+﻿namespace WebSocketServer.Interface;
 
 public interface IRabbitListenerService
 {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebSocketServer.Interface;
 using WebSocketServer.Service;
 
 namespace WebSocketServer.Controllers;
@@ -9,10 +10,12 @@ namespace WebSocketServer.Controllers;
 public class ListenerController : Controller
 {
     IConfiguration _configuration;
+    IRabbitListenerService _rabbitListener;
     
-    public ListenerController(IConfiguration configuration) 
+    public ListenerController(IConfiguration configuration, IRabbitListenerService rabbitListener) 
     {
         _configuration = configuration;
+        _rabbitListener = rabbitListener;
     }
 
     /// <summary>
@@ -25,7 +28,8 @@ public class ListenerController : Controller
     [Route("[action]")]
     public IActionResult ListenQueue() 
     {
-        return Ok();
+        _rabbitListener.ListenQueue(_configuration);
+        return Ok("Пока все ОК");
     }
 
     /// <summary>

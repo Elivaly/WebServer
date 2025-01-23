@@ -1,14 +1,15 @@
-﻿using Microsoft.AspNetCore.Connections;
+﻿ using Microsoft.AspNetCore.Connections;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Channels;
+using WebSocketServer.Interface;
 
 namespace WebSocketServer.Service;
 
-public class RabbitListenerService : BackgroundService
+public class RabbitListenerService : BackgroundService, IRabbitListenerService
 {
     private IConnection _connection;
     private IModel _channel;
