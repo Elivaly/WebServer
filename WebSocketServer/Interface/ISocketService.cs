@@ -7,5 +7,5 @@ public interface ISocketService
     void Accept(); // для принятия входящего подключения
     void Listen(IPAddress adress, int port); // прослушивание на наличие подключений
     void Connect(string url, int port); // соединение с сервисом
-    void Dispose(); // закрытие сокета
+    void Close(); // закрытие сокета
 }

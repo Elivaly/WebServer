@@ -1,4 +1,6 @@
-﻿ using Microsoft.AspNetCore.Connections;
+﻿using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Data.Common;
@@ -14,6 +16,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     private IConnection _connection;
     private IModel _channel;
     IConfiguration _configuration;
+    bool isDispose;
     public RabbitListenerService(IConfiguration configuration)
     {
         _configuration = configuration;
@@ -61,6 +64,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
 
     public void ListenQueue(Object obj)
     {
+        isDispose = true;
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received += (model, ea) =>
         {
@@ -69,16 +73,22 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             Console.WriteLine("[x] Получено {0}", message);
         };
 
+        _channel.BasicQos(0,1,false);
+
         _channel.BasicConsume(
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: consumer);
+
+        Dispose(isDispose);
     }
 
     public void Dispose(bool disposing)
     {
         _channel.Close();
+        _channel?.Dispose();
         _connection.Close();
+        _connection.Dispose();
         base.Dispose();
     }
 
