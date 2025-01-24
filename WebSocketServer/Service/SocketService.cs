@@ -22,15 +22,53 @@ public class SocketService: ISocketService
 
     public async void Listen(IPAddress address, int port) // слушает на постоянной основе есть ли подключения
     {
-        while (IsConnected)
+        //CheckSocket();
+        //while (IsConnected)
+        //{
+        //    listen_socket.Listen(1);
+        //    Console.WriteLine("Сокет слушает подключения");
+        //    //await listen_socket.BeginAccept();
+        //    Console.WriteLine("Сокет начинает принимать сообщения");
+        //    listen_socket.Close();
+        //    Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
+        //}
+
+        Socket listen_socket = null;
+        try
         {
-            CheckSocket();
+            listen_socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(_configuration["SocketSettings:Url"]), 5001);
+            listen_socket.Bind(endPoint);
             listen_socket.Listen(1);
-            Console.WriteLine("Сокет слушает подключения");
-            await listen_socket.BeginAccept();
-            Console.WriteLine("Сокет начинает принимать сообщения");
-            listen_socket.Close();
-            Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
+
+            var handler = await listen_socket.AcceptAsync();
+            while (true)
+            {
+                var buffer = new byte[4096];
+                var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
+                var response = Encoding.UTF8.GetString(buffer, 0, received);
+
+                var eom = "<|ПОЛУЧАТЕЛЬ|>";
+                if (response.IndexOf(eom) > -1 /* is end of message */)
+                {
+                    Console.WriteLine(
+                        $"Socket server received message: \"{response.Replace(eom, "")}\"");
+
+                    var ackMessage = "<|ОПРАШИВАТЕЛЬ|>";
+                    var echoBytes = Encoding.UTF8.GetBytes(ackMessage);
+                    await handler.SendAsync(echoBytes, 0);
+                    Console.WriteLine(
+                        $"Socket server sent acknowledgment: \"{ackMessage}\"");
+
+                    break;
+                }
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            Console.WriteLine("Socket object was disposed. Creating a new instance.");
+            listen_socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            // Повторите настройку и прослушивание сокета
         }
     }
 
@@ -40,11 +78,19 @@ public class SocketService: ISocketService
         if (!socket.Connected)
         {
             socket.Connect(_configuration["SocketSettings:Address"], 5000);
+            IsConnected = socket.Connected;
         }
         if (listen_socket == null) listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
-        if (listen_socket.LocalEndPoint == null) 
+        try
         {
-            listen_socket.Bind(endPoint);
+            if (listen_socket.LocalEndPoint == null)
+            {
+                listen_socket.Bind(endPoint);
+            }
+        }
+        catch (Exception ex) 
+        {
+            Console.WriteLine(ex.StackTrace);   
         }
     }
 

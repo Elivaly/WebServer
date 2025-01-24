@@ -16,7 +16,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     private IConnection _connection;
     private IModel _channel;
     IConfiguration _configuration;
-    bool isDispose;
     public RabbitListenerService(IConfiguration configuration)
     {
         _configuration = configuration;
@@ -64,7 +63,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
 
     public void ListenQueue(Object obj)
     {
-        isDispose = true;
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received += (model, ea) =>
         {
