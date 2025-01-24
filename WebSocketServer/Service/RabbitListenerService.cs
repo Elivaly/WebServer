@@ -79,8 +79,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: consumer);
-
-        Dispose(isDispose);
     }
 
     public void Dispose(bool disposing)

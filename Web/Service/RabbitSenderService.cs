@@ -52,6 +52,10 @@ public class RabbitSenderService : IRabbitSenderService
             routingKey: _configuration["RabbitMQ:Queue"],
             basicProperties: null,
             body: body);
+
+        _channel.Close();
+        _connection.Close();
+
     }
 
 }
