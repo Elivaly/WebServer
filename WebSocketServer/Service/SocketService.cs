@@ -20,18 +20,17 @@ public class SocketService: ISocketService
         _configuration = configuration;
     }
 
-    public void Accept() // получает входящее подключенние
-    { 
-        socket.Accept();
-    }
-
     public async void Listen(IPAddress address, int port) // слушает на постоянной основе есть ли подключения
     {
         while (IsConnected)
         {
             CheckSocket();
             listen_socket.Listen(1);
+            Console.WriteLine("Сокет слушает подключения");
             await listen_socket.BeginAccept();
+            Console.WriteLine("Сокет начинает принимать сообщения");
+            listen_socket.Close();
+            Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
         }
     }
 
