@@ -32,7 +32,7 @@ public class ListenerController : Controller
     public IActionResult ListenQueue() 
     {
         _socketService.Connect(_configuration["SocketSettings:Url"], int.Parse(_configuration["SocketSettings:ServicePort"]));
-        _socketService.Bind(_socketService.CreateEndPoint());
+        _socketService.Dispose();
         _rabbitListener.ListenQueue(_configuration);
         return Ok("Пока все ОК");
     }
