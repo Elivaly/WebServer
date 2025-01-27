@@ -33,9 +33,23 @@ public class ListenerController : Controller
     {
         _socketService.Connect(_configuration["SocketSettings:Url"], int.Parse(_configuration["SocketSettings:ServicePort"]));
 
-        _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"]));
+        //_socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"]));
 
-        return Ok("Пока все ОК");
+        string [] messages = ["Сообщение","Нужна помощь"];
+        int colMessages = messages.Length;
+        string text;
+        if (messages.Length > 1)
+        {
+            string textMessages = string.Join(", ", messages);
+            text = $"Вам пришли новые сообщения.\nКоличество сообщений: {colMessages}\nСообщения: {textMessages}";
+            return Ok(text);
+        }
+        else
+        {
+            string textMessages = string.Join(", ", messages);
+            text = $"Вам пришло новое сообщение.\nКоличество сообщений: {colMessages}\nСообщение: {textMessages}";
+            return Ok(text);
+        }
     }
 
     /// <summary>
