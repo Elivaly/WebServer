@@ -51,9 +51,6 @@ public class SocketService: ISocketService
             {
                 Console.WriteLine("Ошибка: {0}\nПричина: {1}\nМесто возникновения ошибки: {2}", ex.SocketErrorCode, ex.Message, ex.StackTrace);
             }
-        
-        Console.WriteLine(server_socket.Connected);
-        return [];
     }
 
     public bool CheckSocketConnection(Socket socket)
