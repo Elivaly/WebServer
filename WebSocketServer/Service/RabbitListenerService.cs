@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Channels;
+using System.Threading.Tasks.Dataflow;
 using WebSocketServer.Interface;
 
 namespace WebSocketServer.Service;
@@ -61,13 +62,17 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             arguments: null);
     }
 
-    public void ListenQueue(Object obj)
+    public List<string> ListenQueue()
     {
+        List<string> queue = new List<string>();
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received += (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
+
+            queue.Add(message);
+
             Console.WriteLine("[x] Получено {0}", message);
         };
 
@@ -77,6 +82,8 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: consumer);
+
+        return queue;
     }
 
     public void Dispose(bool disposing)

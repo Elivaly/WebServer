@@ -31,14 +31,12 @@ public class ListenerController : Controller
     [Route("[action]")]
     public IActionResult ListenQueue()
     {
-        _socketService.Connect(_configuration["SocketSettings:Url"], int.Parse(_configuration["SocketSettings:ServicePort"]));
+        //_socketService.Connect(_configuration["SocketSettings:Url"], int.Parse(_configuration["SocketSettings:ServicePort"]));
 
-        //_socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"]));
-
-        string [] messages = ["Сообщение","Нужна помощь"];
-        int colMessages = messages.Length;
+        List<string> messages = _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"])); 
+        int colMessages = messages.Count;
         string text;
-        if (messages.Length > 1)
+        if (messages.Count > 1)
         {
             string textMessages = string.Join(", ", messages);
             text = $"Вам пришли новые сообщения.\nКоличество сообщений: {colMessages}\nСообщения: {textMessages}";

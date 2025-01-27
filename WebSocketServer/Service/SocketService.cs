@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.Extensions.Hosting;
+using RabbitMQ.Client.Events;
+using RabbitMQ.Client;
 using WebSocketServer.Interface;
 
 
@@ -12,27 +14,25 @@ public class SocketService: ISocketService
 {
     private readonly IConfiguration _configuration;
     private readonly IRabbitListenerService _rabbitListener;
-    Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+    Socket server_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     public SocketService(IConfiguration configuration, IRabbitListenerService rabbitListener)
     {
         _configuration = configuration;
         _rabbitListener = rabbitListener;
     }
 
-    public void Listen(IPAddress address) // слушает на постоянной основе есть ли подключения
+    public List<string> Listen(IPAddress address) // слушает на постоянной основе есть ли подключения
     {
-        bool IsConnected = CheckSocketConnection(socket);
-        Console.WriteLine(socket.RemoteEndPoint);
-        Console.WriteLine(socket.LocalEndPoint);
-        while (IsConnected)
-        {
+        //while (IsConnected)
+        
             try
             {
-                Socket listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                listen_socket.Bind(new IPEndPoint(IPAddress.Parse(_configuration["SocketSettings:Url"]), int.Parse(_configuration["SocketSettings:Port"])));
+            
+                Socket server_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                server_socket.Bind(new IPEndPoint(IPAddress.Parse(_configuration["SocketSettings:Url"]), 15672));
                 Console.WriteLine("Сокет слушает подключения");
-                listen_socket.Listen(10);
-                var ipPoint = (IPEndPoint)listen_socket.LocalEndPoint;
+                server_socket.Listen(10);
+                var ipPoint = (IPEndPoint)server_socket.LocalEndPoint;
                 if (ipPoint != null)
                 {
                     var ip = ipPoint.Address.ToString();
@@ -40,28 +40,20 @@ public class SocketService: ISocketService
                     Console.WriteLine("Сокет начинает принимать подключения c адреса {0} на порту {1}", ip, portIp);
                 }
 
+                List<string> receivedMessage = _rabbitListener.ListenQueue(); // прослушивание очереди сообщений из рэбита
 
-                //_rabbitListener.ListenQueue(null);
-
-                Socket accept_socket = listen_socket.Accept();
-                Console.WriteLine("Словилось подключение по адресу {0}", accept_socket.RemoteEndPoint);
-
-                byte[] buffer = new byte[1024];
-                int bytesReceived = accept_socket.Receive(buffer);
-                string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
-                Console.WriteLine("Получено сообщение: {0}", receivedMessage);
-
-
-                accept_socket.Dispose();
-                listen_socket.Dispose();
+                server_socket.Dispose();
                 Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
+
+                return receivedMessage;
             }
             catch (SocketException ex)
             {
                 Console.WriteLine("Ошибка: {0}\nПричина: {1}\nМесто возникновения ошибки: {2}", ex.SocketErrorCode, ex.Message, ex.StackTrace);
             }
-        }
-        Console.WriteLine(socket.Connected);
+        
+        Console.WriteLine(server_socket.Connected);
+        return [];
     }
 
     public bool CheckSocketConnection(Socket socket)
@@ -80,8 +72,8 @@ public class SocketService: ISocketService
         try
         {
             Console.WriteLine("Попытка подключения к сервису...");
-            socket.Connect(url, port);
-            Console.WriteLine("Подключение прошло успешно: {0}", socket.Connected, socket.LocalEndPoint);
+            server_socket.Connect(url, port);
+            Console.WriteLine("Подключение прошло успешно: {0}", server_socket.Connected, server_socket.LocalEndPoint);
         }
         catch (SocketException ex) 
         {
@@ -92,7 +84,7 @@ public class SocketService: ISocketService
     public void Close() 
     {
         Console.WriteLine("Идет закрытие соединения...");
-        socket.Close();
-        Console.WriteLine("Соединение открыто: {0}", socket.Connected);
+        server_socket.Close();
+        Console.WriteLine("Соединение открыто: {0}", server_socket.Connected);
     }// закрывает сокет
 }

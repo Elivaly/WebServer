@@ -2,5 +2,5 @@
 
 public interface IRabbitListenerService
 {
-    public void ListenQueue(Object obj);
+    public List<string> ListenQueue();
 }
