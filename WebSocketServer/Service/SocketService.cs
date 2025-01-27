@@ -19,47 +19,49 @@ public class SocketService: ISocketService
         _rabbitListener = rabbitListener;
     }
 
-    public void Listen(IPAddress address, int port) // слушает на постоянной основе есть ли подключения
+    public void Listen(IPAddress address) // слушает на постоянной основе есть ли подключения
     {
         bool IsConnected = CheckSocketConnection(socket);
-        while (IsConnected)
-        {
-            try
-            {
-                Socket listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("192.168.5.32"), 5000);
-                listen_socket.Bind(endPoint);
-                Console.WriteLine("Сокет слушает подключения");
-                listen_socket.Listen(10);
-                var ipPoint = (IPEndPoint)listen_socket.LocalEndPoint;
-                if (ipPoint != null)
-                {
-                    var ip = ipPoint.Address.ToString();
-                    var portIp = ipPoint.Port;
-                    Console.WriteLine("Сокет начинает принимать подключения c адреса {0} на порту {1}", ip, portIp);
-                }
+        Console.WriteLine(socket.RemoteEndPoint);
+        Console.WriteLine(socket.LocalEndPoint); 
+        //while (IsConnected)
+        //{
+        //    try
+        //    {
+        //        Socket listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        //        IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("192.168.5.32"), 5000);
+        //        listen_socket.Bind(endPoint);
+        //        Console.WriteLine("Сокет слушает подключения");
+        //        listen_socket.Listen(10);
+        //        var ipPoint = (IPEndPoint)listen_socket.LocalEndPoint;
+        //        if (ipPoint != null)
+        //        {
+        //            var ip = ipPoint.Address.ToString();
+        //            var portIp = ipPoint.Port;
+        //            Console.WriteLine("Сокет начинает принимать подключения c адреса {0} на порту {1}", ip, portIp);
+        //        }
 
 
-                //_rabbitListener.ListenQueue(null);
+        //        //_rabbitListener.ListenQueue(null);
 
-                Socket accept_socket = listen_socket.Accept();
-                Console.WriteLine("Словилось подключение по адресу {0}", accept_socket.RemoteEndPoint);
+        //        Socket accept_socket = listen_socket.Accept();
+        //        Console.WriteLine("Словилось подключение по адресу {0}", accept_socket.RemoteEndPoint);
 
-                byte[] buffer = new byte[1024];
-                int bytesReceived = accept_socket.Receive(buffer);
-                string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
-                Console.WriteLine("Получено сообщение: {0}", receivedMessage);
+        //        byte[] buffer = new byte[1024];
+        //        int bytesReceived = accept_socket.Receive(buffer);
+        //        string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
+        //        Console.WriteLine("Получено сообщение: {0}", receivedMessage);
 
 
-                accept_socket.Dispose();
-                listen_socket.Dispose();
-                Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
-            }
-            catch (SocketException ex)
-            {
-                Console.WriteLine("Ошибка: {0}\nПричина: {1}\nМесто возникновения ошибки: {2}", ex.SocketErrorCode, ex.Message, ex.StackTrace);
-            }
-        }
+        //        accept_socket.Dispose();
+        //        listen_socket.Dispose();
+        //        Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
+        //    }
+        //    catch (SocketException ex)
+        //    {
+        //        Console.WriteLine("Ошибка: {0}\nПричина: {1}\nМесто возникновения ошибки: {2}", ex.SocketErrorCode, ex.Message, ex.StackTrace);
+        //    }
+        //}
         Console.WriteLine(socket.Connected);
     }
 

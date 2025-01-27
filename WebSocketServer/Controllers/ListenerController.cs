@@ -33,7 +33,7 @@ public class ListenerController : Controller
     {
         _socketService.Connect(_configuration["SocketSettings:Url"], int.Parse(_configuration["SocketSettings:ServicePort"]));
 
-        _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"]), int.Parse(_configuration["SocketSettings:Port"]));
+        _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"]));
 
         return Ok("Пока все ОК");
     }
