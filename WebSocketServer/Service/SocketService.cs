@@ -11,61 +11,58 @@ namespace WebSocketServer.Service;
 public class SocketService: ISocketService
 {
     private readonly IConfiguration _configuration;
-    private bool IsConnected;
+    private readonly IRabbitListenerService _rabbitListener;
     Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-    Socket listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-    IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("192.168.5.32"), 5001);
-    public SocketService(IConfiguration configuration)
+    public SocketService(IConfiguration configuration, IRabbitListenerService rabbitListener)
     {
         _configuration = configuration;
+        _rabbitListener = rabbitListener;
     }
 
     public void Listen(IPAddress address, int port) // слушает на постоянной основе есть ли подключения
     {
-        while (socket.Connected)
-        {
-            try 
+            try
             {
                 Socket listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("192.168.5.32"), 5001);
+                IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("192.168.5.32"), 5000);
                 listen_socket.Bind(endPoint);
-                listen_socket.Listen(10);
                 Console.WriteLine("Сокет слушает подключения");
-                Console.WriteLine("Сокет начинает принимать сообщения");
+                listen_socket.Listen(10);
+                Console.WriteLine("Сокет начинает принимать подключения");
+
+                _rabbitListener.ListenQueue(null);
+
+                Socket accept_socket = listen_socket.BeginAccept();
+                Console.WriteLine("Словилось подключение по адресу {0}", accept_socket.RemoteEndPoint);
+
+                byte[] buffer = new byte[1024];
+                int bytesReceived = accept_socket.Receive(buffer);
+                string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
+                Console.WriteLine("Получено сообщение: {0}", receivedMessage);
 
                 // обработка сообщений
 
+                accept_socket.Dispose();
                 listen_socket.Dispose();
                 Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
             }
             catch (SocketException ex)
             {
                 Console.WriteLine("Ошибка: {0}\nПричина: {1}\nМесто возникновения ошибки: {2}", ex.SocketErrorCode, ex.Message, ex.StackTrace);
-                break;
             }
-        }
+            socket.Close();
+            Console.WriteLine(socket.Connected);
     }
 
-    public void CheckSocket()
+    public bool CheckSocketConnection(Socket socket)
     {
-        if (socket == null) socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
-        if (!socket.Connected)
+        if (socket == null)
         {
-            socket.Connect(_configuration["SocketSettings:Address"], 5000);
-            IsConnected = socket.Connected;
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(_configuration["SocketSettings:Url"]), int.Parse(_configuration["SocketSettings:Port"]));
+            socket.Connect(endPoint);
         }
-        if (listen_socket == null) listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
-        try
-        {
-            if (listen_socket.LocalEndPoint == null)
-            {
-                listen_socket.Bind(endPoint);
-            }
-        }
-        catch (Exception ex) 
-        {
-            Console.WriteLine(ex.StackTrace);   
-        }
+        return socket.Connected;
     }
 
     public void Connect(string url, int port) 
@@ -73,8 +70,7 @@ public class SocketService: ISocketService
         try
         {
             Console.WriteLine("Попытка подключения к сервису...");
-            socket.Connect(url, 15672);
-            IsConnected = socket.Connected;
+            socket.Connect(url, port);
             Console.WriteLine("Подключение прошло успешно: {0}", socket.Connected, socket.LocalEndPoint);
         }
         catch (SocketException ex) 
@@ -87,7 +83,6 @@ public class SocketService: ISocketService
     {
         Console.WriteLine("Идет закрытие соединения...");
         socket.Close();
-        IsConnected = true;
         Console.WriteLine("Соединение открыто: {0}", socket.Connected);
     }// закрывает сокет
 }

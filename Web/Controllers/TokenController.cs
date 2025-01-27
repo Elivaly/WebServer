@@ -71,27 +71,27 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
                 }
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
-                    return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
                 }
-                return Ok(new { ID = user.ID, StatusCode = StatusCode(200) });
+                return Ok(new { ID = user.ID, StatusCode = 200 });
             }
         } 
         catch (Exception ex)
         { 
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = StatusCode(400) });
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
         }
     }
 
@@ -139,27 +139,27 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Ok(new { timeRemaining = -1, StatusCode = StatusCode(200)});
+                    return Ok(new { timeRemaining = -1, StatusCode = 200});
                 }
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
-                    return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
                 }
-                return Ok(new { timeRemaining = timeRemainingMilliSeconds, StatusCode = StatusCode(200) });
+                return Ok(new { timeRemaining = timeRemainingMilliSeconds, StatusCode = 200 });
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = StatusCode(400) });
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
         }
     }
 
@@ -207,20 +207,20 @@ public class TokenController : ControllerBase
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
-                    return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
                 }
                 var data = GetDataFromExpiredToken(token);
                 var newToken = GenerateJwtToken(data);
                 _configuration["JWT:Token"] = newToken;
                 HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
                 Response.Headers.Add("Authorization", $"Bearer {newToken}");
-                return Ok(new { token = newToken, StatusCode = StatusCode(200) });
+                return Ok(new { token = newToken, StatusCode = 200 });
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка:{ex.Message}");
-            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = StatusCode(400) });
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
         }
     }
 
@@ -268,27 +268,27 @@ public class TokenController : ControllerBase
             {
                 if (token != _configuration["JWT:Token"])
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
                 }
                 var expiration = jwt.ValidTo;
                 var timeRemaining = expiration - DateTime.UtcNow;
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = StatusCode(401) });
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
                 }
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
-                    return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
                 }
-                return Ok(new {username = user.Username, passwordHash = user.Password, StatusCode = StatusCode(200) });
+                return Ok(new {username = user.Username, passwordHash = user.Password, StatusCode = 200 });
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = StatusCode(400) });
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
         }
     }
 
@@ -303,7 +303,7 @@ public class TokenController : ControllerBase
     public IActionResult GetServerTime()
     {
         var time = DateTime.Now;
-        return Ok(new { ServerTime = time.ToString(), StatusCode = StatusCode(200) });
+        return Ok(new { ServerTime = time.ToString(), StatusCode = 200 });
     }
 
     /// <summary>
@@ -356,7 +356,7 @@ public class TokenController : ControllerBase
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
-                    return NotFound(new { message = "Пользователь не существует", StatusCode = StatusCode(404) });
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
                 }
                 return Ok(true);
             }
@@ -364,7 +364,7 @@ public class TokenController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = StatusCode(400) });
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
         }
     }
 

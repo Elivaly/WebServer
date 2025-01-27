@@ -29,10 +29,12 @@ public class ListenerController : Controller
     /// </remarks>
     [HttpGet]
     [Route("[action]")]
-    public IActionResult ListenQueue() 
+    public IActionResult ListenQueue()
     {
         _socketService.Connect(_configuration["SocketSettings:Url"], int.Parse(_configuration["SocketSettings:ServicePort"]));
+
         _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"]), int.Parse(_configuration["SocketSettings:Port"]));
+
         return Ok("Пока все ОК");
     }
 
