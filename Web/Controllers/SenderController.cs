@@ -30,13 +30,14 @@ public class SenderController : Controller
     /// Отсылает сообщение в очередь и БД
     /// </remarks>
     /// <response code="401">Пользователь не авторизован</response>
+    /// <response code="500">Во время исполнения произошла ошибка на стороне сервера</response>
     [Route("[action]")]
     [HttpPost]
     public IActionResult SendMessage(Message message) 
     {
         using (DBC db = new DBC(_configuration)) 
         {
-            message.Datetime_Create = DateTime.Now;
+            message.Datetime_Create = DateTime.UtcNow.AddHours(3);
             message.ID_User = GetID();
             if(message.ID_User == 0) 
             {
