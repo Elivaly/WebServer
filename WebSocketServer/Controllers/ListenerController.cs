@@ -51,4 +51,5 @@ public class ListenerController : Controller
         var time = DateTime.Now;
         return Ok(new { ServerTime = time.ToString()});
     }
+
 }

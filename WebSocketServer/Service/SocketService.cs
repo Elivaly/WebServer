@@ -21,6 +21,9 @@ public class SocketService: ISocketService
 
     public void Listen(IPAddress address, int port) // слушает на постоянной основе есть ли подключения
     {
+        bool IsConnected = CheckSocketConnection(socket);
+        while (IsConnected)
+        {
             try
             {
                 Socket listen_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -28,11 +31,18 @@ public class SocketService: ISocketService
                 listen_socket.Bind(endPoint);
                 Console.WriteLine("Сокет слушает подключения");
                 listen_socket.Listen(10);
-                Console.WriteLine("Сокет начинает принимать подключения");
+                var ipPoint = (IPEndPoint)listen_socket.LocalEndPoint;
+                if (ipPoint != null)
+                {
+                    var ip = ipPoint.Address.ToString();
+                    var portIp = ipPoint.Port;
+                    Console.WriteLine("Сокет начинает принимать подключения c адреса {0} на порту {1}", ip, portIp);
+                }
 
-                _rabbitListener.ListenQueue(null);
 
-                Socket accept_socket = listen_socket.BeginAccept();
+                //_rabbitListener.ListenQueue(null);
+
+                Socket accept_socket = listen_socket.Accept();
                 Console.WriteLine("Словилось подключение по адресу {0}", accept_socket.RemoteEndPoint);
 
                 byte[] buffer = new byte[1024];
@@ -40,7 +50,6 @@ public class SocketService: ISocketService
                 string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
                 Console.WriteLine("Получено сообщение: {0}", receivedMessage);
 
-                // обработка сообщений
 
                 accept_socket.Dispose();
                 listen_socket.Dispose();
@@ -50,8 +59,8 @@ public class SocketService: ISocketService
             {
                 Console.WriteLine("Ошибка: {0}\nПричина: {1}\nМесто возникновения ошибки: {2}", ex.SocketErrorCode, ex.Message, ex.StackTrace);
             }
-            socket.Close();
-            Console.WriteLine(socket.Connected);
+        }
+        Console.WriteLine(socket.Connected);
     }
 
     public bool CheckSocketConnection(Socket socket)
