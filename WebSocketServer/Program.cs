@@ -50,5 +50,6 @@ app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<SocketHubService>("/api/Auth/Sender");
 
 app.Run(builder.Configuration["ApplicationHost:Address"]);
