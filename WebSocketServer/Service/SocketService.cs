@@ -24,31 +24,25 @@ public class SocketService: ISocketService
 
     public List<string> Listen(IPAddress address)
     {
-        try
+        Socket server_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        server_socket.Bind(new IPEndPoint(address, 15672));
+        Console.WriteLine("Сокет слушает очередь");
+        server_socket.Listen(10);
+
+        List<string> receivedMessage = _rabbitListener.GetMessages();
+        _rabbitListener.ClearList();
+
+        Console.WriteLine(receivedMessage.Count);
+        foreach (var message in receivedMessage)
         {
-
-            Socket server_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            server_socket.Bind(new IPEndPoint(IPAddress.Parse(_configuration["SocketSettings:Url"]), 15672));
-            Console.WriteLine("Сокет слушает очередь");
-            server_socket.Listen(10);
-
-            List<string> receivedMessage = _rabbitListener.GetMessages();
-            Console.WriteLine(receivedMessage.Count);
-            foreach (var message in receivedMessage)
-            {
-                Console.WriteLine("Сообщение: {0}", message);
-            }
-
-            server_socket.Dispose();
-            Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
-
-            return receivedMessage;
+            Console.WriteLine("Сообщение: {0}", message);
         }
-        catch (SocketException ex)
-        {
-            Console.WriteLine("Ошибка: {0}\nПричина: {1}\nМесто возникновения ошибки: {2}", ex.SocketErrorCode, ex.Message, ex.StackTrace);
-        }
-        return [];
+
+        server_socket.Dispose();
+        Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
+
+        return receivedMessage;
+
     }
 
     public bool CheckSocketConnection(Socket socket)

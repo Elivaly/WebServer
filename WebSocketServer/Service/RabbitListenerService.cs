@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Data.Common;
@@ -18,7 +19,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     private IConnection _connection;
     private IModel _channel;
     private IConfiguration _configuration;
-    List<Message> messages = new List<Message>();
+    public static List<Message> messages = new List<Message>();
     public RabbitListenerService(IConfiguration configuration)
     {
         _configuration = configuration;
@@ -86,7 +87,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             autoAck: true,
             consumer: consumer);
     }
-
     public List<string> GetMessages() 
     {
         List<string> messagesString = new List<string>();
@@ -96,6 +96,11 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             messagesString.Add(text);
         }
         return messagesString;
+    }
+
+    public void ClearList() 
+    {
+        messages.Clear();
     }
 
     public void CloseConnection()
