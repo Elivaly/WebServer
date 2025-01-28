@@ -11,6 +11,7 @@ var connectionString = builder.Configuration["ConnectionStrings:DefaultConnectio
 builder.Services.AddDbContext<DBC>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IRabbitListenerService, RabbitListenerService>();

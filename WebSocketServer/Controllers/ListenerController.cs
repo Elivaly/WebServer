@@ -44,7 +44,7 @@ public class ListenerController : Controller
         else
         {
             string textMessages = string.Join(", ", messages);
-            text = $"Вам пришло новое сообщение.\nКоличество сообщений: {colMessages}\nСообщение: {textMessages}";
+            text = $"Вам пришло новое сообщение.\nСообщение: {textMessages}";
             return Ok(text);
         }
     }
