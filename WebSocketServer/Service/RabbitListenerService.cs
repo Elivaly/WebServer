@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks.Dataflow;
 using WebSocketServer.Interface;
+using WebSocketServer.Schems;
 
 namespace WebSocketServer.Service;
 
@@ -17,6 +18,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     private IConnection _connection;
     private IModel _channel;
     IConfiguration _configuration;
+    List<Message> messages = new List<Message>();
     public RabbitListenerService(IConfiguration configuration)
     {
         _configuration = configuration;
@@ -62,16 +64,17 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             arguments: null);
     }
 
-    public List<string> ListenQueue()
+    public void ListenQueue()
     {
-        List<string> queue = new List<string>();
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received += (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
 
-            queue.Add(message);
+            Message mess = new Message();
+            mess.Message_Text = message;
+            messages.Add(mess);
 
             Console.WriteLine("[x] Получено {0}", message);
         };
@@ -82,17 +85,27 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: consumer);
+    }
 
-        return queue;
+    public List<string> GetMessages() 
+    {
+        List<string> messagesString = new List<string>();
+        foreach (var message in messages) 
+        {
+            string text = message.Message_Text;  
+            messagesString.Add(text);
+        }
+        return messagesString;
     }
 
     public void Dispose(bool disposing)
     {
         _channel.Close();
-        _channel?.Dispose();
         _connection.Close();
+        _channel.Dispose();
         _connection.Dispose();
         base.Dispose();
     }
 
 }
+

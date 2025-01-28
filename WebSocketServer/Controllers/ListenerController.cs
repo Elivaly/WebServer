@@ -31,8 +31,6 @@ public class ListenerController : Controller
     [Route("[action]")]
     public IActionResult ListenQueue()
     {
-        //_socketService.Connect(_configuration["SocketSettings:Url"], int.Parse(_configuration["SocketSettings:ServicePort"]));
-
         List<string> messages = _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"])); 
         int colMessages = messages.Count;
         string text;
@@ -48,20 +46,6 @@ public class ListenerController : Controller
             text = $"Вам пришло новое сообщение.\nКоличество сообщений: {colMessages}\nСообщение: {textMessages}";
             return Ok(text);
         }
-    }
-
-    /// <summary>
-    /// Получить время сервера
-    /// </summary>
-    /// <remarks>
-    /// Возвращает время на машине
-    /// </remarks>
-    [HttpGet]
-    [Route("[action]")]
-    public IActionResult GetServerTime() 
-    {
-        var time = DateTime.Now;
-        return Ok(new { ServerTime = time.ToString()});
     }
 
 }

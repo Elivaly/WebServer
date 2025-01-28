@@ -1,6 +1,11 @@
-﻿namespace WebSocketServer.Interface;
+﻿using WebSocketServer.Schems;
+
+namespace WebSocketServer.Interface;
 
 public interface IRabbitListenerService
 {
-    public List<string> ListenQueue();
+    public void ListenQueue();
+
+    public List<string> GetMessages();
+
 }
