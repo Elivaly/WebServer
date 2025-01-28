@@ -1,6 +1,11 @@
- @WebSocketServer_HostAddress = http://localhost:5149
+ @WebSocketServer_HostAddress_Developer = http://192.168.5.32:5149
+ @WebSocketServer_HostAddress_Customer = http://192.168.5.32:5149
 
-GET {{WebSocketServer_HostAddress}}/weatherforecast/
+GET {{WebSocketServer_HostAddress_Developer}}/api/Listener/ListenQueue
+Accept: application/json
+###
+
+GET {{WebSocketServer_HostAddress_Customer}}/api/Listener/ListenQueue
 Accept: application/json
 
 ###
