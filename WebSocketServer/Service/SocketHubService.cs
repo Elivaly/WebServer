@@ -12,6 +12,6 @@ public class SocketHubService : Hub
     }
     public async void Send(string message) 
     {
-        await this.Clients.All.SendAsync("Получено сообщение ", message);    
+        await this.Clients.All.SendAsync("Уведомление", message, Context.ConnectionId);    
     }
 }

@@ -90,6 +90,9 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: consumer);
+
+        _connection.Close();
+        _channel.Close();
     }
     public List<string> GetMessages() 
     {

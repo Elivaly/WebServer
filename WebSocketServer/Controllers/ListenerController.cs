@@ -27,6 +27,7 @@ public class ListenerController : Controller
     /// <remarks>
     /// Прослушивает очередь на наличие сообщений и подключений
     /// </remarks>
+    /// <response code = "404">Отсутствуют сообщения</response>
     [HttpGet]
     [Route("[action]")]
     public IActionResult ListenQueue()
@@ -35,6 +36,10 @@ public class ListenerController : Controller
         List<string> messages = _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"])); 
         int colMessages = messages.Count;
         string text;
+        if (messages.Count == 0) 
+        {
+            return NotFound(new {message = "В очереди нет сообщений", statusCode = 404 });
+        }
         if (messages.Count > 1)
         {
             string textMessages = string.Join(", ", messages);
