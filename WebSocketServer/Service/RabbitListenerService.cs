@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Data.Common;
@@ -73,6 +75,8 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
 
+            var test = JObject.Parse(message);
+            message = test["Message_Text"].ToString();
             Message mess = new Message();
             mess.Message_Text = message;
             messages.Add(mess);
