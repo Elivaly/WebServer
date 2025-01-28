@@ -22,7 +22,7 @@ public class SocketService: ISocketService
         _rabbitListener = rabbitListener;
     }
 
-    public List<string> Listen(IPAddress address) // слушает на постоянной основе есть ли подключения
+    public List<string> Listen(IPAddress address)
     {
         try
         {
@@ -38,8 +38,6 @@ public class SocketService: ISocketService
             {
                 Console.WriteLine("Сообщение: {0}", message);
             }
-
-            _rabbitListener.ListenQueue(); // прослушивание очереди сообщений из рэбита
 
             server_socket.Dispose();
             Console.WriteLine("Сокет завершил прослушивание и закрыл соединение");
@@ -69,5 +67,5 @@ public class SocketService: ISocketService
         Console.WriteLine("Идет закрытие соединения...");
         server_socket.Close();
         Console.WriteLine("Соединение открыто: {0}", server_socket.Connected);
-    }// закрывает сокет
+    }
 }

@@ -8,4 +8,6 @@ public interface IRabbitListenerService
 
     public List<string> GetMessages();
 
+    public void CloseConnection();
+
 }

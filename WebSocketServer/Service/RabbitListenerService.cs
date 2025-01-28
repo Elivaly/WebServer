@@ -17,7 +17,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
 {
     private IConnection _connection;
     private IModel _channel;
-    IConfiguration _configuration;
+    private IConfiguration _configuration;
     List<Message> messages = new List<Message>();
     public RabbitListenerService(IConfiguration configuration)
     {
@@ -98,7 +98,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         return messagesString;
     }
 
-    public void Dispose(bool disposing)
+    public void CloseConnection()
     {
         _channel.Close();
         _connection.Close();

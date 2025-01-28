@@ -31,6 +31,7 @@ public class ListenerController : Controller
     [Route("[action]")]
     public IActionResult ListenQueue()
     {
+        _rabbitListener.ListenQueue();
         List<string> messages = _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"])); 
         int colMessages = messages.Count;
         string text;
