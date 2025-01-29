@@ -37,7 +37,7 @@ public class SenderController : Controller
     {
         using (DBC db = new DBC(_configuration)) 
         {
-            message.Datetime_Create = DateTime.UtcNow.AddHours(3);
+            message.Datetime_Create = DateTime.UtcNow;
             message.ID_User = GetID();
             if(message.ID_User == 0) 
             {
