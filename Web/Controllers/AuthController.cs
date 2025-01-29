@@ -33,8 +33,8 @@ public class AuthController : ControllerBase
     /// <response code="401">Неверный логин или пароль</response>
     /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
-    [Route("LoginByPassword")] 
-    public IActionResult LoginByPassword([FromBody] User user) 
+    [Route("[action]")] 
+    public IActionResult SignIn([FromBody] User user) 
     {
 
         // Проверка доступности HttpContext
@@ -96,8 +96,8 @@ public class AuthController : ControllerBase
     /// <response code="401">Время жизни токена истекло</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
-    [Route("Logout")]
-    public IActionResult Logout() 
+    [Route("[action]")]
+    public IActionResult SignOut() 
     {
         if (HttpContext == null)
         {

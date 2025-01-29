@@ -34,8 +34,8 @@ public class RegistrationController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
 
     [HttpPost]
-    [Route("Registration")]
-    public IActionResult Registration([FromBody][Required] User user)
+    [Route("[action]")]
+    public IActionResult SignUp([FromBody][Required] User user)
     {
         // Проверка доступности HttpContext
         if (HttpContext == null)

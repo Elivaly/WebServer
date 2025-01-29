@@ -36,7 +36,7 @@ public class UserController : ControllerBase
     /// </remarks>
     /// <response code="404">Пользовательские данные отсутствуют</response>
     [HttpGet]
-    [Route("GetAllUsers")]
+    [Route("[action]")]
     public IActionResult GetAllUsers()
     {
         List<User> users = new List<User>(); 
@@ -60,7 +60,7 @@ public class UserController : ControllerBase
     /// <response code="400">Некорректные данные</response>
     /// <response code="404">Пользователь не существует</response>
     [HttpPut]
-    [Route("UpdatePasswordById")]
+    [Route("[action]")]
     public IActionResult UpdatePasswordById([FromQuery][Required] int index, [FromQuery][Required] string newPassword) 
     {
         if (index <= 0) 
@@ -91,7 +91,7 @@ public class UserController : ControllerBase
     /// <response code="400">Некорректно введенные данные</response>
     /// <response code="404">Пользователь не существует</response>
     [HttpDelete]
-    [Route("DeleteUserById")]
+    [Route("[action]")]
     public IActionResult DeleteUserById([FromQuery][Required] int index) 
     {
         if (index <= 0) 

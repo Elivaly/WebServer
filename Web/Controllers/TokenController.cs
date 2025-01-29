@@ -38,8 +38,8 @@ public class TokenController : ControllerBase
     /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
-    [Route("DecodeToken")]
-    public IActionResult DecodeToken([Required] string token)
+    [Route("[action]")]
+    public IActionResult GetID([Required] string token)
     {
         if (HttpContext == null)
         {
@@ -106,7 +106,7 @@ public class TokenController : ControllerBase
     /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
-    [Route("CheckTokenTime")]
+    [Route("[action]")]
     public IActionResult CheckTokenTime([Required]string token)
     {
         if (HttpContext == null)
@@ -173,7 +173,7 @@ public class TokenController : ControllerBase
     /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла ошибка на стороне сервера</response>
     [HttpPost]
-    [Route("RefreshTokenTime")]
+    [Route("[action]")]
     public IActionResult RefreshTokenTime([Required]string token) 
     {
         if (HttpContext == null)
@@ -235,7 +235,7 @@ public class TokenController : ControllerBase
     /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполенения произошла внутрисерверная ошибка</response>
     [HttpGet]
-    [Route("GetUserData")]
+    [Route("[action]")]
     public IActionResult GetUserData([Required] string token) 
     {
         if (HttpContext == null)
@@ -299,7 +299,7 @@ public class TokenController : ControllerBase
     /// Возвращает текущее время на машине
     /// </remarks>
     [HttpGet]
-    [Route("GetServerTime")]
+    [Route("[action]")]
     public IActionResult GetServerTime()
     {
         var time = DateTime.Now;
@@ -314,7 +314,7 @@ public class TokenController : ControllerBase
     /// <response code="404">Пользователь не существует</response>
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
-    [Route("SubmitJWT")]
+    [Route("[action]")]
     [Obsolete]
     public IActionResult SubmitJWT([Required] string token)
     {
