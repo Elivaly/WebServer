@@ -82,7 +82,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             string role = "";
             var test = JObject.Parse(message);
             message = test["Message_Text"].ToString();
-            role = test["User_ID"].ToString();
+            role = test["ID_User"].ToString();
 
             Roles rol = new Roles();
             Message mess = new Message();
@@ -144,7 +144,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         using (DBC db = new DBC(_configuration)) 
         {
             int i = int.Parse(id);
-            var user = db.Users.FirstOrDefault(u => u.ID == i);
+            var user = db.Users.FirstOrDefault(u => u.ID_Role == i);
             if (user != null) 
             {
                 var role = user.ID_Role;

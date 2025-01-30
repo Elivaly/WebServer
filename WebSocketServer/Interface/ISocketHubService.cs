@@ -14,5 +14,5 @@ public interface ISocketHubService
     public async Task ReceiveMessage(WebSocket socket, Action<WebSocketReceiveResult, byte[]> handleMessage) { }
 
     public async Task GetMessages(WebSocket item, RabbitListenerService rabbit) { }
-    public async Task GetRole(RabbitListenerService rabbit) { }
+    public string GetRole(RabbitListenerService rabbit);
 }

@@ -7,8 +7,8 @@ namespace WebSocketServer.Database;
 public class DBC : DbContext
 {
     public DbContext context;
-    public DbSet<User> Users { get; set; }
-    public DbSet<Roles> Roles { get; set; }
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Roles> Roles { get; set; } = null!;
 
     private IConfiguration _configuration;
     public DBC(IConfiguration configuration) 
