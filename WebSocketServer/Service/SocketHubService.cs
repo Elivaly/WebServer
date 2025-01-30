@@ -69,4 +69,16 @@ public class SocketHubService : Hub, ISocketHubService
         }
         Thread.Sleep(1000);
     }
+
+    public async Task GetRole(RabbitListenerService rabbit)
+    {
+        List<string> role = rabbit.GetRoleName();
+        string mess = "";
+        if (role.Count() > 0)
+        {
+            mess = role[0];
+            role.Clear();
+            rabbit.ClearList();
+        }
+    }
 }

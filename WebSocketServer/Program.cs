@@ -57,7 +57,7 @@ app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var currentName = context.Request.Query["role"];
+        var currentName = socketService.GetRole(rabbitService);
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
         connections.Add(ws);
         await socketService.Broadcast($"{currentName} присоединился к чату", connections);
