@@ -61,10 +61,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         _channel = _connection.CreateModel();
         _consumer = new EventingBasicConsumer(_channel);
 
-        _channel.ExchangeDeclare(exchange: "fanout_exchange", type: ExchangeType.Fanout);
-        var queueName = _channel.QueueDeclare().QueueName;
-        _channel.QueueBind(queue: queueName, exchange: "fanout_exchange", routingKey: "");
-
         _channel.QueueDeclare(
             queue: _configuration["RabbitMQ:Queue"],
             durable: false,

@@ -33,6 +33,7 @@ builder.Services.AddSwaggerGen(c =>
     c.EnableAnnotations();
 });
 builder.Services.AddSingleton<RabbitListenerService>();
+builder.Services.AddSingleton<SocketHubService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -48,12 +49,35 @@ if (app.Environment.IsDevelopment())
 var rabbitService = app.Services.GetRequiredService<RabbitListenerService>();
 rabbitService.ListenQueue();
 
+var socketService = app.Services.GetRequiredService<SocketHubService>();
+List<WebSocket> connections = new List<WebSocket>();
 app.UseWebSockets();
+app.UseRouting();
 app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
+        var currentName = context.Request.Query["name"];
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
+        connections.Add(ws);
+        await socketService.Broadcast($"{currentName} присоединился к чату", connections);
+        await socketService.Broadcast($"{connections.Count} пользователей в чате", connections);
+        await socketService.ReceiveMessage(ws, async (result, buffer) => 
+        {
+            if (result.MessageType == WebSocketMessageType.Text)
+            {
+                string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                await socketService.Broadcast($" {currentName} : {message}", connections);
+            }
+            else if(result.MessageType == WebSocketMessageType.Close || ws.State == WebSocketState.Aborted) 
+            {
+                connections.Remove(ws);
+                await socketService.Broadcast($"{currentName} покинул чат", connections);
+                await socketService.Broadcast($"{connections.Count} пользователей в чате", connections);
+                await ws.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            }
+        });
+        
         while (true) 
         {
             List<string> message = rabbitService.GetMessages();
@@ -85,6 +109,7 @@ app.Map("/ws", async context =>
         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
     }
 });
+
 
 app.UseSwagger();
 app.UseSwaggerUI();
