@@ -57,7 +57,7 @@ app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var currentName = context.Request.Query["name"];
+        var currentName = context.Request.Query["role"];
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
         connections.Add(ws);
         await socketService.Broadcast($"{currentName} присоединился к чату", connections);
@@ -77,32 +77,8 @@ app.Map("/ws", async context =>
                 await ws.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
             }
         });
-        
-        while (true) 
-        {
-            List<string> message = rabbitService.GetMessages();
-            string mess = "";
-            if (message.Count() > 0) 
-            {
-                mess = message[0];
-                message.Clear();
-                rabbitService.ClearList();
-            }
-            var bytes = Encoding.UTF8.GetBytes(mess);
-            var arraySegment = new ArraySegment<byte>(bytes, 0, bytes.Length);
-            if(ws.State == WebSocketState.Open) 
-            {
-                await ws.SendAsync(arraySegment,
-                    WebSocketMessageType.Text,
-                    true,
-                    CancellationToken.None);
-            }
-            else if (ws.State == WebSocketState.Closed || ws.State == WebSocketState.Aborted) 
-            {
-                break;
-            }
-            Thread.Sleep(1000);
-        }
+
+        socketService.GetMessages(ws, rabbitService);
     }
     else
     {

@@ -15,7 +15,7 @@ public class SocketHubService : Hub, ISocketHubService
     }
     public async Task Send(string message) 
     {
-        await this.Clients.All.SendAsync("Уведомление", message, Context.ConnectionId);    
+        await this.Clients.All.SendAsync("Receive", message, Context.ConnectionId);    
     }
 
     public async Task Broadcast(string message, List<WebSocket> connections) 
@@ -39,5 +39,34 @@ public class SocketHubService : Hub, ISocketHubService
             var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             handleMessage(result, buffer);
         }
+    }
+
+    public async Task GetMessages(WebSocket item, RabbitListenerService rabbit) 
+    {
+        while (true)
+        {
+            List<string> message = rabbit.GetMessages();
+            string mess = "";
+            if (message.Count() > 0)
+            {
+                mess = message[0];
+                message.Clear();
+                rabbit.ClearList();
+            }
+            var bytes = Encoding.UTF8.GetBytes(mess);
+            var arraySegment = new ArraySegment<byte>(bytes, 0, bytes.Length);
+            if (item.State == WebSocketState.Open)
+            {
+                await item.SendAsync(arraySegment,
+                    WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None);
+            }
+            else if (item.State == WebSocketState.Closed || item.State == WebSocketState.Aborted)
+            {
+                break;
+            }
+        }
+        Thread.Sleep(1000);
     }
 }
