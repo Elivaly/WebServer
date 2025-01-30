@@ -21,6 +21,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     private IConnection _connection;
     private IModel _channel;
     private IConfiguration _configuration;
+    private EventingBasicConsumer _consumer;
     public static List<Message> messages = new List<Message>();
     public RabbitListenerService(IConfiguration configuration)
     {
@@ -32,8 +33,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     {
         stoppingToken.ThrowIfCancellationRequested();
 
-        var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += (ch, ea) =>
+        _consumer.Received += (ch, ea) =>
         {
             var content = Encoding.UTF8.GetString(ea.Body.ToArray());
 
@@ -43,7 +43,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             _channel.BasicAck(ea.DeliveryTag, false);
         };
 
-        _channel.BasicConsume(_configuration["RabbitMQ:Queue"], false, consumer);
+        _channel.BasicConsume(_configuration["RabbitMQ:Queue"], false, _consumer);
 
         return Task.CompletedTask;
     }
@@ -59,6 +59,12 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
 
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
+        _consumer = new EventingBasicConsumer(_channel);
+
+        _channel.ExchangeDeclare(exchange: "fanout_exchange", type: ExchangeType.Fanout);
+        var queueName = _channel.QueueDeclare().QueueName;
+        _channel.QueueBind(queue: queueName, exchange: "fanout_exchange", routingKey: "");
+
         _channel.QueueDeclare(
             queue: _configuration["RabbitMQ:Queue"],
             durable: false,
@@ -69,8 +75,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
 
     public void ListenQueue()
     {
-        var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += (model, ea) =>
+        _consumer.Received += (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
@@ -89,10 +94,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         _channel.BasicConsume(
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
-            consumer: consumer);
-
-        _connection.Close();
-        _channel.Close();
+            consumer: _consumer);
     }
     public List<string> GetMessages() 
     {

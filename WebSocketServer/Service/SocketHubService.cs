@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using WebSocketServer.Interface;
 
 namespace WebSocketServer.Service;
 
-public class SocketHubService : Hub
+public class SocketHubService : Hub, ISocketHubService
 {
     IConfiguration _configuration;
 
