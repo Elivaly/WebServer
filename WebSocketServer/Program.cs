@@ -58,7 +58,7 @@ app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var currentName = socketService.GetRole(); 
+        var currentName = await socketService.GetRole(); 
         Console.WriteLine(currentName);
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
         connections.Add(ws);
