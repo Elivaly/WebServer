@@ -38,6 +38,8 @@ public class SenderController : Controller
     {
         using (DBC db = new DBC(_configuration)) 
         {
+            Console.WriteLine(_configuration["UserSettings:ID"] + "LOLOLOLOLOLO");
+            Console.WriteLine(message.ID_User + "SOSOSOSOSOSOSO");
             message.Datetime_Create = DateTime.UtcNow;
             if(message.ID_User == 0) 
             {
