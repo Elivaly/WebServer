@@ -14,10 +14,10 @@ public class SocketHubService : Hub, ISocketHubService
     {
         _configuration = configuration;
     }
-    public async Task Send(string message) 
-    {
-        await this.Clients.All.SendAsync("Receive", message, Context.ConnectionId);    
-    }
+    //public async Task Send(string message) 
+    //{
+     //   await this.Clients.All.SendAsync("Receive", message, Context.ConnectionId);    
+    //}
 
     public async Task Broadcast(string message, List<WebSocket> connections) 
     {

@@ -78,6 +78,7 @@ public class AuthController : ControllerBase
             }
             var token = GenerateJwtToken(existingUser);
             _configuration["JWT:Token"]=token;
+            _configuration["UserSettings:ID"] = user.ID.ToString();
             Response.Headers.Add("Authorization", $"Bearer {token}");
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });

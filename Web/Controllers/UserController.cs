@@ -156,6 +156,13 @@ public class UserController : ControllerBase
     {
         return Ok( new { role = _configuration["UserSettings:Role"] });
     }
+
+    [HttpGet]
+    [Route("[action]")]
+    public IActionResult GetCurrentID() 
+    {
+        return Ok(new { ID = _configuration["UserSettings:ID"]});
+    }
     private string Hash(string password)
     {
         byte[] data = Encoding.Default.GetBytes(password);
