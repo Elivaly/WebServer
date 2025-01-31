@@ -110,6 +110,32 @@ public class UserController : ControllerBase
         }
         return Ok( new { message = "Пользователь был удален", StatusCode = 200 });
     }
+
+    /// <summary>
+    /// Получение роли пользователя
+    /// </summary>
+    /// <remarks>
+    /// Возвращает название роли пользователя на основе имени
+    /// </remarks>
+    /// <response code="404">Пользователь не существует</response>
+    [HttpGet]
+    [Route("GetUserRole")]
+    public IActionResult GetUserRole([Required] string name) 
+    {
+        string role = "User";
+        using (DBC db = new(_configuration)) 
+        {
+            var user = db.Users.FirstOrDefault(x => x.Username == name);
+            if (user == null)
+            {
+                return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
+            }
+            int idRole = user.ID_Role;
+            var roleName = db.Roles.Where(u => u.ID_Role == idRole).Select(u => u.Name_Role).FirstOrDefault();
+            role = roleName;
+        }
+        return Ok(new { role = role});
+    }
     private string Hash(string password)
     {
         byte[] data = Encoding.Default.GetBytes(password);
