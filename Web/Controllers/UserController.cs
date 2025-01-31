@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 using AuthService;
 using AuthService.Handler;
 using AuthService.Schems;
@@ -120,21 +121,40 @@ public class UserController : ControllerBase
     /// <response code="404">Пользователь не существует</response>
     [HttpGet]
     [Route("GetUserRole")]
-    public IActionResult GetUserRole([Required] string name) 
+    public IActionResult GetUserRole([FromQuery][Required] string name) 
     {
         string role = "User";
         using (DBC db = new(_configuration)) 
         {
-            var user = db.Users.FirstOrDefault(x => x.Username == name);
-            if (user == null)
+            var user1 = db.Users.FirstOrDefault(x => x.Username == name);
+            string decodeName = HttpUtility.UrlDecode(name);
+            var user2 = db.Users.FirstOrDefault(x => x.Username == decodeName);
+            if (user1 == null && user2 == null)
             {
                 return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
             }
-            int idRole = user.ID_Role;
-            var roleName = db.Roles.Where(u => u.ID_Role == idRole).Select(u => u.Name_Role).FirstOrDefault();
-            role = roleName;
+            if (user1 != null)
+            {
+                int idRole = user1.ID_Role;
+                var roleName = db.Roles.Where(u => u.ID_Role == idRole).Select(u => u.Name_Role).FirstOrDefault();
+                role = roleName;
+            }
+            else 
+            {
+                int idRole = user2.ID_Role;
+                var roleName = db.Roles.Where(u => u.ID_Role == idRole).Select(u => u.Name_Role).FirstOrDefault();
+                role = roleName;
+            }
+            _configuration["UserSettings:Role"] = role;
         }
         return Ok(new { role = role});
+    }
+
+    [HttpGet]
+    [Route("[action]")]
+    public IActionResult GetCurrentRole() 
+    {
+        return Ok( new { role = _configuration["UserSettings:Role"] });
     }
     private string Hash(string password)
     {

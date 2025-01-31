@@ -26,7 +26,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     private IConfiguration _configuration;
     private EventingBasicConsumer _consumer;
     public static List<Message> messages = new List<Message>();
-    public static List<Roles> roles = new List<Roles>();
     public RabbitListenerService(IConfiguration configuration)
     {
         _configuration = configuration;
@@ -79,19 +78,14 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
-            string role = "";
             var test = JObject.Parse(message);
             message = test["Message_Text"].ToString();
-            role = test["ID_User"].ToString();
 
-            Roles rol = new Roles();
             Message mess = new Message();
             mess.Message_Text = message;
-            rol.Name_Role = GetRole(role);
             messages.Add(mess);
-            roles.Add(rol);
 
-            Console.WriteLine("[x] Получено {0} от {1}", message, rol.Name_Role);
+            Console.WriteLine("[x] Получено {0}", message);
         };
 
         _channel.BasicQos(0,1,false);
@@ -112,21 +106,9 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         return messagesString;
     }
 
-    public List<string> GetRoleName() 
-    {
-        List<string> roleName = new List<string>();
-        foreach(var name in roles) 
-        {
-            string text = name.ToString();
-            roleName.Add(text);
-        }
-        return roleName;
-    }
-
     public void ClearList() 
     {
         messages.Clear();
-        roles.Clear();
     }
 
     public void CloseConnection()
@@ -136,22 +118,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         _channel.Dispose();
         _connection.Dispose();
         base.Dispose();
-    }
-
-    public string GetRole(string id) 
-    {
-        string name = "";
-        using (DBC db = new DBC(_configuration)) 
-        {
-            int i = int.Parse(id);
-            var user = db.Users.FirstOrDefault(u => u.ID_Role == i);
-            if (user != null) 
-            {
-                var role = user.ID_Role;
-                name = db.Roles.Where(r => r.ID_Role == role).Select(r => r.Name_Role).Distinct().ToString();
-            }
-        }
-        return name;
     }
 
 }

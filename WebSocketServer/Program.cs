@@ -7,6 +7,7 @@ using WebSocketServer.Interface;
 using WebSocketServer.Service;
 using System.Net;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,7 +58,7 @@ app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var currentName = socketService.GetRole(rabbitService);
+        var currentName = socketService.GetRole(); 
         Console.WriteLine(currentName);
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
         connections.Add(ws);

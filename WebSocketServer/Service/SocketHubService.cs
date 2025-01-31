@@ -1,6 +1,7 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json.Linq;
 using WebSocketServer.Interface;
 
 namespace WebSocketServer.Service;
@@ -70,17 +71,13 @@ public class SocketHubService : Hub, ISocketHubService
         Thread.Sleep(1000);
     }
 
-    public string GetRole(RabbitListenerService rabbit)
+    public async Task <string> GetRole() 
     {
-        List<string> role = rabbit.GetRoleName();
-        string mess = "Пользователь";
-        if (role.Count() > 0)
-        {
-            mess = role[0];
-            role.Clear();
-            rabbit.ClearList();
-            return mess;
-        }
-        return mess;
+        HttpClient client = new HttpClient();
+        var response = await client.GetAsync("http://192.168.5.32:5000/api/User/GetCurrentRole");
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(responseBody);
+        var role = json["role"].ToString();
+        return role;
     }
 }
