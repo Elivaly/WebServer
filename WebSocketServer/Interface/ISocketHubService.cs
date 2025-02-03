@@ -16,4 +16,6 @@ public interface ISocketHubService
     public async Task GetMessages(WebSocket item, RabbitListenerService rabbit) { }
 
     public async Task GetRole() { }
+
+    public async Task GetID() { }
 }

@@ -127,8 +127,10 @@ public class UserController : ControllerBase
         using (DBC db = new(_configuration)) 
         {
             var user1 = db.Users.FirstOrDefault(x => x.Username == name);
+            var user1ID = user1.ID;
             string decodeName = HttpUtility.UrlDecode(name);
             var user2 = db.Users.FirstOrDefault(x => x.Username == decodeName);
+            var user2ID = user2.ID;
             if (user1 == null && user2 == null)
             {
                 return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
@@ -138,12 +140,14 @@ public class UserController : ControllerBase
                 int idRole = user1.ID_Role;
                 var roleName = db.Roles.Where(u => u.ID_Role == idRole).Select(u => u.Name_Role).FirstOrDefault();
                 role = roleName;
+                _configuration["UserSettings:ID"] = user1ID.ToString();
             }
             else 
             {
                 int idRole = user2.ID_Role;
                 var roleName = db.Roles.Where(u => u.ID_Role == idRole).Select(u => u.Name_Role).FirstOrDefault();
                 role = roleName;
+                _configuration["UserSettings:ID"] = user2ID.ToString();
             }
             _configuration["UserSettings:Role"] = role;
         }
@@ -159,11 +163,11 @@ public class UserController : ControllerBase
 
     [HttpGet]
     [Route("[action]")]
-    public IActionResult GetCurrentID() 
+    public IActionResult GetCurrentID()
     {
-        int id = int.Parse(_configuration["UserSettings:ID"]);
-        return Ok(new { ID = id});
+        return Ok(new { id = int.Parse(_configuration["UserSettings:ID"]) });
     }
+
     private string Hash(string password)
     {
         byte[] data = Encoding.Default.GetBytes(password);

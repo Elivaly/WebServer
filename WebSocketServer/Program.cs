@@ -57,8 +57,9 @@ app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var currentName = await socketService.GetRole(); 
-        Console.WriteLine(currentName);
+        var currentName = await socketService.GetRole();
+        var currentID = await socketService.GetID();
+        Console.WriteLine(currentName + " отправил сообщение...");
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
         connections.Add(ws);
         await socketService.Broadcast($"{currentName} присоединился к чату", connections);
@@ -68,7 +69,7 @@ app.Map("/ws", async context =>
             if (result.MessageType == WebSocketMessageType.Text)
             {
                 string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                await socketService.Broadcast($" {currentName} : {message}", connections);
+                await socketService.Broadcast($" {currentName} {currentID}: {message}", connections);
             }
             else if(result.MessageType == WebSocketMessageType.Close || ws.State == WebSocketState.Aborted) 
             {

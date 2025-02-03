@@ -53,4 +53,15 @@ public class ListenerController : Controller
         }
     }
 
+    /// <summary>
+    /// Тестовый метод для клиента
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet]
+    [Route("[action]")]
+    public IActionResult GetID() 
+    {
+        return Ok(new { id = int.Parse(_configuration["UserSettings:ID"]) });
+    }
+
 }

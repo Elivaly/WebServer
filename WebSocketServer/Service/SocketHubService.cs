@@ -80,4 +80,15 @@ public class SocketHubService : Hub, ISocketHubService
         var role = json["role"].ToString();
         return role;
     }
+
+    public async Task <int> GetID() 
+    {
+        HttpClient client = new HttpClient();
+        var response = await client.GetAsync("http://192.168.5.32:5000/api/User/GetCurrentID");
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(responseBody);
+        var id = int.Parse(json["id"].ToString());
+        _configuration["UserSettings"] = json["id"].ToString();
+        return id;
+    }
 }
