@@ -1,15 +1,25 @@
+using System.Net;
+using System.Net.WebSockets;
+using System.Reflection;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
-using System.Net.WebSockets;
 using WebSocketServer.Database;
 using WebSocketServer.Interface;
 using WebSocketServer.Service;
-using System.Net;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// CORS Policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader();
+    });
+});
 
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
 builder.Services.AddDbContext<DBC>(options => options.UseNpgsql(connectionString));
@@ -58,20 +68,19 @@ app.Map("/ws", async context =>
     if (context.WebSockets.IsWebSocketRequest)
     {
         var currentName = await socketService.GetRole();
-        var currentID = await socketService.GetID();
-        Console.WriteLine(currentName + " отправил сообщение...");
+        Console.WriteLine(builder.Configuration["UserSettings:ID"]);
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
         connections.Add(ws);
         await socketService.Broadcast($"{currentName} присоединился к чату", connections);
         await socketService.Broadcast($"{connections.Count} пользователей в чате", connections);
-        await socketService.ReceiveMessage(ws, async (result, buffer) => 
+        await socketService.ReceiveMessage(ws, async (result, buffer) =>
         {
             if (result.MessageType == WebSocketMessageType.Text)
             {
                 string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                await socketService.Broadcast($" {currentName} {currentID}: {message}", connections);
+                await socketService.Broadcast($" {currentName} : {message}", connections);
             }
-            else if(result.MessageType == WebSocketMessageType.Close || ws.State == WebSocketState.Aborted) 
+            else if (result.MessageType == WebSocketMessageType.Close || ws.State == WebSocketState.Aborted)
             {
                 connections.Remove(ws);
                 await socketService.Broadcast($"{currentName} покинул чат", connections);
@@ -79,7 +88,6 @@ app.Map("/ws", async context =>
                 await ws.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
             }
         });
-
         socketService.GetMessages(ws, rabbitService);
     }
     else
@@ -95,6 +103,6 @@ app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<SocketHubService>("/api/Auth/Sender");
+app.UseCors("AllowAll");
 
 app.Run(builder.Configuration["ApplicationHost:Address"]);

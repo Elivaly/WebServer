@@ -1,13 +1,12 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-using AuthService.Handler;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using AuthService.Schems;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Xml.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using AuthService.Handler;
+using AuthService.Schems;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Controllers;
 
@@ -20,7 +19,7 @@ public class AuthController : ControllerBase
     public AuthController(IConfiguration configuration)
     {
         _configuration = configuration;
-        
+
     }
 
     /// <summary>
@@ -33,8 +32,8 @@ public class AuthController : ControllerBase
     /// <response code="401">Неверный логин или пароль</response>
     /// <response code="500">В процессе выполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
-    [Route("[action]")] 
-    public IActionResult SignIn([FromBody] User user) 
+    [Route("[action]")]
+    public IActionResult SignIn([FromBody] User user)
     {
 
         // Проверка доступности HttpContext
@@ -68,7 +67,7 @@ public class AuthController : ControllerBase
         }
         #endregion
 
-        using (DBC db = new (_configuration)) 
+        using (DBC db = new(_configuration))
         {
             user.Password = Hash(user.Password);
             var existingUser = db.Users.FirstOrDefault(u => u.Username == user.Username && u.Password == user.Password);
@@ -77,12 +76,12 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = 401 });
             }
             var token = GenerateJwtToken(existingUser);
-            _configuration["JWT:Token"]=token;
+            _configuration["JWT:Token"] = token;
             Response.Headers.Add("Authorization", $"Bearer {token}");
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
-            return Ok(new { token = token, StatusCode = 200});
+            return Ok(new { token = token, StatusCode = 200 });
         }
     }
 
@@ -97,7 +96,7 @@ public class AuthController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpPost]
     [Route("[action]")]
-    public IActionResult SignOut() 
+    public IActionResult SignOut()
     {
         if (HttpContext == null)
         {
@@ -116,7 +115,7 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
         }
-        if (_configuration["JWT:Token"] == "") 
+        if (_configuration["JWT:Token"] == "")
         {
             return BadRequest(new { message = "Пользователь не вошел в систему", StatusCode = 400 });
         }
@@ -124,7 +123,7 @@ public class AuthController : ControllerBase
         Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         HttpContext.Response.Cookies.Delete("jwtToken");
         _configuration["JWT:Token"] = "";
-        return Ok(new { message = "Пользователь вышел из системы", StatusCode = 200 }); 
+        return Ok(new { message = "Пользователь вышел из системы", StatusCode = 200 });
     }
 
     private string GenerateJwtToken(User user)
@@ -135,18 +134,18 @@ public class AuthController : ControllerBase
             throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
         }
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); 
-        var claims = new List<Claim>() 
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        var claims = new List<Claim>()
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.ID.ToString())
         };
-        var token = new JwtSecurityToken( 
+        var token = new JwtSecurityToken(
             issuer: _configuration["JWT:Issuer"],
             audience: _configuration["JWT:Audience"],
             claims: claims,
             expires: DateTime.Now.AddMinutes(1),
-            signingCredentials: credentials); 
-        return new JwtSecurityTokenHandler().WriteToken(token); 
+            signingCredentials: credentials);
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
 

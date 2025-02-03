@@ -1,6 +1,4 @@
 ﻿using System.Net.WebSockets;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using WebSocketServer.Service;
 namespace WebSocketServer.Interface;
 
@@ -17,5 +15,4 @@ public interface ISocketHubService
 
     public async Task GetRole() { }
 
-    public async Task GetID() { }
 }

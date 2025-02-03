@@ -1,19 +1,8 @@
-﻿using Microsoft.AspNetCore.Authentication.BearerToken;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Query.Internal;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using Newtonsoft.Json;
+﻿using System.Diagnostics;
+using System.Text;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Data.Common;
-using System.Diagnostics;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks.Dataflow;
-using WebSocketServer.Database;
 using WebSocketServer.Interface;
 using WebSocketServer.Schems;
 
@@ -88,25 +77,25 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             Console.WriteLine("[x] Получено {0}", message);
         };
 
-        _channel.BasicQos(0,1,false);
+        _channel.BasicQos(0, 1, false);
 
         _channel.BasicConsume(
             queue: _configuration["RabbitMQ:Queue"],
             autoAck: true,
             consumer: _consumer);
     }
-    public List<string> GetMessages() 
+    public List<string> GetMessages()
     {
         List<string> messagesString = new List<string>();
-        foreach (var message in messages) 
+        foreach (var message in messages)
         {
-            string text = message.Message_Text;  
+            string text = message.Message_Text;
             messagesString.Add(text);
         }
         return messagesString;
     }
 
-    public void ClearList() 
+    public void ClearList()
     {
         messages.Clear();
     }

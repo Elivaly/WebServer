@@ -10,7 +10,7 @@ public class SocketHubService : Hub, ISocketHubService
 {
     IConfiguration _configuration;
 
-    public SocketHubService(IConfiguration configuration) 
+    public SocketHubService(IConfiguration configuration)
     {
         _configuration = configuration;
     }
@@ -19,12 +19,12 @@ public class SocketHubService : Hub, ISocketHubService
         await this.Clients.All.SendAsync("Receive", message, Context.ConnectionId);
     }
 
-    public async Task Broadcast(string message, List<WebSocket> connections) 
+    public async Task Broadcast(string message, List<WebSocket> connections)
     {
         var bytes = Encoding.UTF8.GetBytes(message);
-        foreach (var socket in connections) 
+        foreach (var socket in connections)
         {
-            if(socket.State == WebSocketState.Open) 
+            if (socket.State == WebSocketState.Open)
             {
                 var arraySegment = new ArraySegment<byte>(bytes, 0, bytes.Length);
                 await socket.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
@@ -32,17 +32,17 @@ public class SocketHubService : Hub, ISocketHubService
         }
     }
 
-    public async Task ReceiveMessage(WebSocket socket, Action<WebSocketReceiveResult, byte[]> handleMessage) 
+    public async Task ReceiveMessage(WebSocket socket, Action<WebSocketReceiveResult, byte[]> handleMessage)
     {
         var buffer = new byte[4096];
-        while (socket.State == WebSocketState.Open) 
+        while (socket.State == WebSocketState.Open)
         {
             var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             handleMessage(result, buffer);
         }
     }
 
-    public async Task GetMessages(WebSocket item, RabbitListenerService rabbit) 
+    public async Task GetMessages(WebSocket item, RabbitListenerService rabbit)
     {
         while (true)
         {
@@ -71,24 +71,14 @@ public class SocketHubService : Hub, ISocketHubService
         Thread.Sleep(1000);
     }
 
-    public async Task <string> GetRole() 
+    public async Task<string> GetRole()
     {
         HttpClient client = new HttpClient();
-        var response = await client.GetAsync("http://192.168.5.32:5000/api/User/GetCurrentRole");
+        var response = await client.GetAsync("http://192.168.5.32:5433/api/User/GetCurrentRole");
         var responseBody = await response.Content.ReadAsStringAsync();
         var json = JObject.Parse(responseBody);
         var role = json["role"].ToString();
         return role;
     }
 
-    public async Task <int> GetID() 
-    {
-        HttpClient client = new HttpClient();
-        var response = await client.GetAsync("http://192.168.5.32:5000/api/User/GetCurrentID");
-        var responseBody = await response.Content.ReadAsStringAsync();
-        var json = JObject.Parse(responseBody);
-        var id = int.Parse(json["id"].ToString());
-        _configuration["UserSettings"] = json["id"].ToString();
-        return id;
-    }
 }

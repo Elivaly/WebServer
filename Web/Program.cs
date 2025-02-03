@@ -1,27 +1,25 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using AuthService.Handler;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.OpenApi.Models;
-using AuthService.Exceptions;
-using AuthService.Middleware;
 using System.Reflection;
+using System.Text;
+using AuthService.Handler;
 using AuthService.Interface;
+using AuthService.Middleware;
 using AuthService.Service;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // CORS Policy
-builder.Services.AddCors(options => 
-{ options.AddPolicy("AllowAll", builder => 
-    { 
-        builder.AllowAnyOrigin() 
-        .AllowAnyMethod() 
-        .AllowAnyHeader(); 
-    }); 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader();
+    });
 });
 
 // Registrate context
@@ -38,8 +36,8 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 
 var key = builder.Configuration["JWT:Key"];
 if (string.IsNullOrEmpty(key))
-{ 
-    throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty."); 
+{
+    throw new ArgumentNullException(nameof(key), "JWT Key cannot be null or empty.");
 }
 
 // JWT settings
@@ -61,40 +59,40 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
     };
 });
-builder.Services.AddSwaggerGen(options => 
-{ 
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme 
-    { 
-        In = ParameterLocation.Header, 
-        Description = "Please enter JWT with Bearer into field", 
-        Name = "Authorization", 
-        Type = SecuritySchemeType.ApiKey, 
-        Scheme = "Bearer" 
-    }); 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement 
-    { 
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter JWT with Bearer into field",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
         {
-            new OpenApiSecurityScheme 
+            new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference 
-                { 
+                Reference = new OpenApiReference
+                {
                     Type = ReferenceType.SecurityScheme, Id = "Bearer"
-                } 
+                }
             },
-            new string[] { } 
-        } 
-    }); 
+            new string[] { }
+        }
+    });
 });
-builder.Services.AddSwaggerGen(c => 
-{ 
-    c.SwaggerDoc("v1", new OpenApiInfo 
-    { 
-        Title = "AuthorizationService", 
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "AuthorizationService",
         Version = "v1.2",
         Description = "ѕроект представл€ет собой серверную часть дл€ авторизации и переавторизации пользовател€"
     });
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"; 
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile); 
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
     c.EnableAnnotations();
 });

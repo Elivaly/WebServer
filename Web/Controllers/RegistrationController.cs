@@ -8,7 +8,6 @@ using AuthService.Handler;
 using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql;
 
 namespace AuthService.Controllers;
 
@@ -17,7 +16,7 @@ namespace AuthService.Controllers;
 public class RegistrationController : ControllerBase
 {
     IConfiguration _configuration;
-    
+
     public RegistrationController(IConfiguration configuration)
     {
         _configuration = configuration;
@@ -89,7 +88,7 @@ public class RegistrationController : ControllerBase
             _configuration["JWT:Token"] = token;
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
-            return Ok(new { access = token, StatusCode = 200});
+            return Ok(new { access = token, StatusCode = 200 });
         }
     }
     private string GenerateJwtToken(User user)
@@ -122,22 +121,22 @@ public class RegistrationController : ControllerBase
         return checker;
     }
     private bool SpecialSymbolCheck(string str)
-    {  
+    {
         bool checker = false;
         string pattern = @"[!@#$%^&*(),.?\"":{}|<>`~/=_+'№;]";
         Regex regex = new Regex(pattern);
         if (regex.IsMatch(str)) checker = true;
         return checker;
     }
-    private bool DashCheck(string str) 
+    private bool DashCheck(string str)
     {
         bool checker = false;
-        if(str.Contains("-")) checker = true;
+        if (str.Contains("-")) checker = true;
         return checker;
     }
-    private string Hash (string password) 
+    private string Hash(string password)
     {
-        byte [] data = Encoding.Default.GetBytes(password);
+        byte[] data = Encoding.Default.GetBytes(password);
         SHA1 sha = new SHA1CryptoServiceProvider();
         byte[] result = sha.ComputeHash(data);
         password = Convert.ToBase64String(result);

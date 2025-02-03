@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Data;
-using AuthService.Schems;
-using Microsoft.AspNetCore.Identity;
+﻿using AuthService.Schems;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -21,18 +18,18 @@ public class DBC : DbContext
         var connectionString = config["ConnectionStrings:DefaultConnection"];
         NpgsqlConnection sqlConnection = new NpgsqlConnection(connectionString);
     }
-      
-    public DBC(DbContextOptions<DBC> options,IConfiguration config) : base(options) 
+
+    public DBC(DbContextOptions<DBC> options, IConfiguration config) : base(options)
     {
         _configuration = config;
         var connectionString = config["ConnectionStrings:DefaultConnection"];
         NpgsqlConnection sqlConnection = new NpgsqlConnection(connectionString);
         sqlConnection.Open();
         Console.WriteLine(sqlConnection.ConnectionString);
-        sqlConnection.Close();        
+        sqlConnection.Close();
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var connectionString = _configuration["ConnectionStrings:DefaultConnection"];
         optionsBuilder.UseNpgsql(connectionString);

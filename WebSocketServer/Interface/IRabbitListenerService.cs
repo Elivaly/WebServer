@@ -1,6 +1,4 @@
-﻿using WebSocketServer.Schems;
-
-namespace WebSocketServer.Interface;
+﻿namespace WebSocketServer.Interface;
 
 public interface IRabbitListenerService
 {

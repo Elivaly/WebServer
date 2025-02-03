@@ -1,7 +1,5 @@
-﻿using Microsoft.Extensions.Localization;
+﻿using System.Net;
 using Newtonsoft.Json;
-using System.Net;
-using System.Security.Authentication;
 
 namespace AuthService.Exceptions
 {
@@ -31,11 +29,11 @@ namespace AuthService.Exceptions
             return (code, JsonConvert.SerializeObject(new SimpleResponse(exception.Message)));
         }
     }
-    public class SimpleResponse 
+    public class SimpleResponse
     {
         public string Message { get; set; }
 
-        public SimpleResponse(string message) 
+        public SimpleResponse(string message)
         {
             Message = message;
         }

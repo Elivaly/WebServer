@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using AuthService.Interface;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Service;
@@ -11,7 +10,7 @@ namespace AuthService.Service;
 public class TokenService : ITokenService
 {
     private readonly IConfiguration _configuration;
-    public TokenService(IConfiguration configuration) 
+    public TokenService(IConfiguration configuration)
     {
         _configuration = configuration;
     }

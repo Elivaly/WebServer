@@ -1,9 +1,7 @@
-﻿using AuthService.Interface;
-using RabbitMQ.Client;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using System.Threading.Channels;
-using Windows.Storage.FileProperties;
+using AuthService.Interface;
+using RabbitMQ.Client;
 
 
 namespace AuthService.Service;
@@ -13,13 +11,13 @@ public class RabbitSenderService : IRabbitSenderService
     private IConfiguration _configuration;
     private IModel _channel;
     private IConnection _connection;
-    public RabbitSenderService(IConfiguration configuration) 
+    public RabbitSenderService(IConfiguration configuration)
     {
         _configuration = configuration;
         Initialize();
     }
 
-    public void Initialize() 
+    public void Initialize()
     {
         var factory = new ConnectionFactory()
         {
@@ -37,7 +35,7 @@ public class RabbitSenderService : IRabbitSenderService
             autoDelete: false,
             arguments: null);
     }
-    public void SendMessage(Object obj) 
+    public void SendMessage(Object obj)
     {
         var message = JsonSerializer.Serialize(obj);
         SendMessage(message);

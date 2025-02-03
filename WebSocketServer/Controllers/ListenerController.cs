@@ -1,8 +1,5 @@
-﻿using System.Net;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using WebSocketServer.Interface;
-using WebSocketServer.Service;
 
 namespace WebSocketServer.Controllers;
 
@@ -10,12 +7,10 @@ namespace WebSocketServer.Controllers;
 [ApiController]
 public class ListenerController : Controller
 {
-    IConfiguration _configuration;
     IRabbitListenerService _rabbitListener;
-    
-    public ListenerController(IConfiguration configuration, IRabbitListenerService rabbitListener) 
+
+    public ListenerController(IRabbitListenerService rabbitListener)
     {
-        _configuration = configuration;
         _rabbitListener = rabbitListener;
     }
 
@@ -35,9 +30,9 @@ public class ListenerController : Controller
         _rabbitListener.ClearList();
         int colMessages = messages.Count;
         string text;
-        if (messages.Count == 0) 
+        if (messages.Count == 0)
         {
-            return NotFound(new {message = "В очереди нет сообщений", statusCode = 404 });
+            return NotFound(new { message = "В очереди нет сообщений", statusCode = 404 });
         }
         if (messages.Count > 1)
         {
@@ -51,17 +46,6 @@ public class ListenerController : Controller
             text = $"Вам пришло новое сообщение.\nСообщение: {textMessages}";
             return Ok(text);
         }
-    }
-
-    /// <summary>
-    /// Тестовый метод для клиента
-    /// </summary>
-    /// <returns></returns>
-    [HttpGet]
-    [Route("[action]")]
-    public IActionResult GetID() 
-    {
-        return Ok(new { id = int.Parse(_configuration["UserSettings:ID"]) });
     }
 
 }

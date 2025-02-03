@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace AuthService.Schems;
@@ -14,7 +13,7 @@ public class User
 
     [SwaggerIgnore]
     public DateOnly Date_Create { get; set; }
-    
+
     [SwaggerIgnore]
     public int ID_Role { get; set; }
 
