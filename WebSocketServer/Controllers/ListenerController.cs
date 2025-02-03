@@ -12,13 +12,11 @@ public class ListenerController : Controller
 {
     IConfiguration _configuration;
     IRabbitListenerService _rabbitListener;
-    ISocketService _socketService;
     
-    public ListenerController(IConfiguration configuration, IRabbitListenerService rabbitListener, ISocketService socketService) 
+    public ListenerController(IConfiguration configuration, IRabbitListenerService rabbitListener) 
     {
         _configuration = configuration;
         _rabbitListener = rabbitListener;
-        _socketService = socketService;
     }
 
     /// <summary>
@@ -33,7 +31,8 @@ public class ListenerController : Controller
     public IActionResult ListenQueue()
     {
         _rabbitListener.ListenQueue();
-        List<string> messages = _socketService.Listen(IPAddress.Parse(_configuration["SocketSettings:Url"])); 
+        List<string> messages = _rabbitListener.GetMessages();
+        _rabbitListener.ClearList();
         int colMessages = messages.Count;
         string text;
         if (messages.Count == 0) 

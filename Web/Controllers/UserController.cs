@@ -161,7 +161,6 @@ public class UserController : ControllerBase
     [Route("[action]")]
     public IActionResult GetCurrentID() 
     {
-        Console.WriteLine("ЧТО ЭТО ТАКОЕ АААА" + _configuration["UserSettings:ID"]);
         int id = int.Parse(_configuration["UserSettings:ID"]);
         return Ok(new { ID = id});
     }
