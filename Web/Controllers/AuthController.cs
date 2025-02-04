@@ -63,10 +63,10 @@ public class AuthController : ControllerBase
             var existingUser = db.Users.FirstOrDefault(u => u.Username == user.Username && u.Password == user.Password);
             if (existingUser == null)
             {
-                return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = 401 });
+                return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = 401});
             }
             var token = GenerateJwtToken(existingUser);
-            Request.Headers.Add("Authorization", $"Bearer {token}");
+            HttpContext.Request.Headers.Add("Authorization", $"{token}");
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
@@ -87,18 +87,11 @@ public class AuthController : ControllerBase
     [Route("[action]")]
     public IActionResult SignOut()
     {
-
-        var token = HttpContext.Request.Headers.Authorization;
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-        var expiration = jwtToken.ValidTo;
-        var timeRemaining = expiration - DateTime.UtcNow;
-        if (timeRemaining <= TimeSpan.Zero)
+        if (HttpContext.Request.Headers.ContainsKey("Authorization"))
         {
-            return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
+            HttpContext.Request.Headers.Remove("Authorization");
+            Console.WriteLine("Заголовок был удалён");
         }
-
-        Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         HttpContext.Response.Cookies.Delete("jwtToken");
         return Ok(new { message = "Пользователь вышел из системы", StatusCode = 200 });
     }

@@ -1,7 +1,6 @@
 ﻿using AuthService.Handler;
 using AuthService.Interface;
 using AuthService.Schems;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.Controllers;

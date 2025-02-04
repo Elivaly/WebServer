@@ -1,13 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq.Expressions;
-using System.Security.Claims;
-using System.Text;
-using AuthService.Handler;
+﻿using AuthService.Handler;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using Windows.ApplicationModel.Activation;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -39,7 +31,9 @@ public class TokenController : BaseController
     public IActionResult CheckTokenTime()
     {
         int time = GetRemainingSeconds();
-        return Ok(new { remainingTime = time, statusCode = 200 });    
+        if (time == -2) return BadRequest("Возникла ошибка во время валидации токена");
+        else if (time == 0) return NotFound("Пользователь не существует");
+        return Ok(new { remainingTime = time, statusCode = 200 });
     }
 
     /// <summary>
@@ -75,7 +69,7 @@ public class TokenController : BaseController
     {
         var id = GetID();
         using (DBC db = new DBC(_configuration))
-        { 
+        {
             var user = db.Users.FirstOrDefault(u => u.ID == id);
             if (user == null)
             {

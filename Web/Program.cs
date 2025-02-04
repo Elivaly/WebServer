@@ -112,7 +112,6 @@ app.UseCors("AllowAll");
 
 //app.UseHttpsRedirection();
 app.UseMiddleware<TokenValidateMiddleware>();
-app.UseMiddleware<LoggingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

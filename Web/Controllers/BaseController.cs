@@ -1,10 +1,10 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using AuthService.Handler;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Windows.UI.Xaml;
 
 namespace AuthService.Controllers;
 
@@ -24,13 +24,13 @@ public class BaseController : Controller
         return GetID(token);
     }
 
-    protected int GetRemainingSeconds() 
+    protected int GetRemainingSeconds()
     {
         string token = HttpContext.Request.Headers.Authorization;
         return GetRemainingSeconds(token);
     }
 
-    protected string RefreshTime() 
+    protected string RefreshTime()
     {
         string token = HttpContext.Request.Headers.Authorization;
         return RefreshTime(token);
@@ -46,7 +46,7 @@ public class BaseController : Controller
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
-                ValidateLifetime = true,
+                ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _configuration["JWT:Issuer"],
                 ValidAudience = _configuration["JWT:Audience"],
@@ -58,17 +58,10 @@ public class BaseController : Controller
             // Проверка наличия пользователя в базе данных
             using (DBC db = new DBC(_configuration))
             {
-                var expiration = jwt.ValidTo;
-                var timeRemaining = expiration - DateTime.UtcNow;
-                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
-                if (timeRemainingMilliSeconds < 0)
-                {
-                    return 0;
-                }
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
-                    return 0;
+                    return -1;
                 }
                 return user.ID;
             }
@@ -80,7 +73,7 @@ public class BaseController : Controller
         }
     }
 
-    private int GetRemainingSeconds(string token) 
+    private int GetRemainingSeconds(string token)
     {
         var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
@@ -120,34 +113,20 @@ public class BaseController : Controller
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
-            return 400;
+            return -2;
         }
     }
 
-    private string RefreshTime(string token) 
+    private string RefreshTime(string token)
     {
         var message = "";
-        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
-        var handler = new JwtSecurityTokenHandler();
         try
         {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _configuration["JWT:Issuer"],
-                ValidAudience = _configuration["JWT:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(key)
-            };
-            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-            var jwt = validatedToken as JwtSecurityToken;
-            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            var id = GetID(token);
             // Проверка наличия пользователя в базе данных
             using (DBC db = new DBC(_configuration))
             {
-                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
+                var user = db.Users.FirstOrDefault(u => u.ID == id);
                 if (user == null)
                 {
                     message = "404";
@@ -157,7 +136,6 @@ public class BaseController : Controller
                 var newToken = GenerateJwtToken(data);
                 HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
                 HttpContext.Request.Headers.Authorization = newToken;
-                Console.WriteLine("Значение в header "+ newToken);
                 message = newToken;
                 return message;
             }
@@ -165,7 +143,7 @@ public class BaseController : Controller
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка:{ex.Message}");
-            message = "400";
+            message = "Отсутствуют данные о токене";
             return message;
         }
     }
