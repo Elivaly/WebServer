@@ -36,15 +36,6 @@ public class RegistrationController : ControllerBase
     [Route("[action]")]
     public IActionResult SignUp([FromBody][Required] User user)
     {
-        // Проверка доступности HttpContext
-        if (HttpContext == null)
-        {
-            Console.WriteLine("HttpContext is null");
-            return StatusCode(500, "Internal server error: HttpContext is null");
-        }
-        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
         using (var db = new DBC(_configuration))
         {
             var password = Hash(user.Password);
@@ -54,29 +45,29 @@ public class RegistrationController : ControllerBase
             #region ValidateChekers
             if (string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password))
             {
-                return BadRequest(new { message = "Пустая строка", StatusCode = 400 });
+                return BadRequest(new { message = "Пустая строка", statusCode = 400 });
             }
 
             if (SpaceCheck(user.Username) || SpaceCheck(user.Password))
             {
-                return BadRequest(new { message = "В одной из строк содержатся пробелы", StatusCode = 400 });
+                return BadRequest(new { message = "В одной из строк содержатся пробелы", statusCode = 400 });
             }
 
             if (SpecialSymbolCheck(user.Username))
             {
-                return BadRequest(new { message = "В имени пользователя содержатся специальные символы", StatusCode = 400 });
+                return BadRequest(new { message = "В имени пользователя содержатся специальные символы", statusCode = 400 });
             }
 
             if (DashCheck(user.Username))
             {
-                return BadRequest(new { message = "В имени пользователя содержится тире", StatusCode = 400 });
+                return BadRequest(new { message = "В имени пользователя содержится тире", statusCode = 400 });
             }
             #endregion
 
             var existingUser = db.Users.FirstOrDefault(u => u.Username == user.Username);
             if (existingUser != null)
             {
-                return Unauthorized(new { message = "Пользователь с таким логином уже существует", StatusCode = 401 });
+                return Unauthorized(new { message = "Пользователь с таким логином уже существует", statusCode = 401 });
             }
 
             db.Users.Add(user);
@@ -85,7 +76,6 @@ public class RegistrationController : ControllerBase
 
             var token = GenerateJwtToken(user);
             Response.Headers.Add("Authorization", $"Bearer {token}");
-            _configuration["JWT:Token"] = token;
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
             return Ok(new { access = token, StatusCode = 200 });
@@ -93,7 +83,6 @@ public class RegistrationController : ControllerBase
     }
     private string GenerateJwtToken(User user)
     {
-
         var key = _configuration["JWT:Key"];
         if (string.IsNullOrEmpty(key))
         {

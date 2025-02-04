@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -8,7 +7,7 @@ using WebSocketServer.Schems;
 
 namespace WebSocketServer.Service;
 
-public class RabbitListenerService : BackgroundService, IRabbitListenerService
+public class RabbitListenerService : IRabbitListenerService
 {
     private IConnection _connection;
     private IModel _channel;
@@ -19,25 +18,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
     {
         _configuration = configuration;
         Initialize();
-    }
-
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        stoppingToken.ThrowIfCancellationRequested();
-
-        _consumer.Received += (ch, ea) =>
-        {
-            var content = Encoding.UTF8.GetString(ea.Body.ToArray());
-
-            Debug.WriteLine($"Получено сообщение: {content}");
-            Console.WriteLine(content);
-
-            _channel.BasicAck(ea.DeliveryTag, false);
-        };
-
-        _channel.BasicConsume(_configuration["RabbitMQ:Queue"], false, _consumer);
-
-        return Task.CompletedTask;
     }
 
     public void Initialize()
@@ -74,7 +54,7 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
             mess.Message_Text = message;
             messages.Add(mess);
 
-            Console.WriteLine("[x] Получено {0}", message);
+            Console.WriteLine("[x] Получено сообщение {0}", message);
         };
 
         _channel.BasicQos(0, 1, false);
@@ -106,7 +86,6 @@ public class RabbitListenerService : BackgroundService, IRabbitListenerService
         _connection.Close();
         _channel.Dispose();
         _connection.Dispose();
-        base.Dispose();
     }
 
 }

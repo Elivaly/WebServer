@@ -52,7 +52,7 @@ public class BaseController : Controller
                 ValidAudience = _configuration["JWT:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(key)
             };
-            handler.ValidateToken(_configuration["JWT:Token"], tokenValidationParameters, out SecurityToken validatedToken);
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
             var jwt = validatedToken as JwtSecurityToken;
             var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
             // Проверка наличия пользователя в базе данных
@@ -155,7 +155,6 @@ public class BaseController : Controller
                 }
                 var data = GetDataFromExpiredToken(token);
                 var newToken = GenerateJwtToken(data);
-                _configuration["JWT:Token"] = newToken;
                 HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
                 HttpContext.Request.Headers.Authorization = newToken;
                 Console.WriteLine("Значение в header "+ newToken);

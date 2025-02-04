@@ -35,16 +35,6 @@ public class AuthController : ControllerBase
     [Route("[action]")]
     public IActionResult SignIn([FromBody] User user)
     {
-
-        // Проверка доступности HttpContext
-        if (HttpContext == null)
-        {
-            Console.WriteLine("HttpContext is null");
-            return StatusCode(500, "Internal server error: HttpContext is null");
-        }
-        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
-
         #region ValidateChekers
         if (string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password))
         {
@@ -76,8 +66,7 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = 401 });
             }
             var token = GenerateJwtToken(existingUser);
-            _configuration["JWT:Token"] = token;
-            Response.Headers.Add("Authorization", $"Bearer {token}");
+            Request.Headers.Add("Authorization", $"Bearer {token}");
 
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
@@ -98,15 +87,8 @@ public class AuthController : ControllerBase
     [Route("[action]")]
     public IActionResult SignOut()
     {
-        if (HttpContext == null)
-        {
-            Console.WriteLine("HttpContext is null");
-            return StatusCode(500, "Internal server error: HttpContext is null");
-        }
-        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
-        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
-        var token = _configuration["JWT:Token"];
+        var token = HttpContext.Request.Headers.Authorization;
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
         var expiration = jwtToken.ValidTo;
@@ -115,14 +97,9 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
         }
-        if (_configuration["JWT:Token"] == "")
-        {
-            return BadRequest(new { message = "Пользователь не вошел в систему", StatusCode = 400 });
-        }
 
         Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         HttpContext.Response.Cookies.Delete("jwtToken");
-        _configuration["JWT:Token"] = "";
         return Ok(new { message = "Пользователь вышел из системы", StatusCode = 200 });
     }
 

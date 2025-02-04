@@ -39,14 +39,14 @@ public class SenderController : BaseController
             message.ID_User = id;
             if (message.ID_User == 0)
             {
-                return Unauthorized(new { message = "Пользователь не вошел в систему", StatusCode = 401 });
+                return Unauthorized(new { message = "Пользователь не вошел в систему", statusCode = 401 });
             }
             db.Messages.Add(message);
             db.SaveChanges();
         }
         _rabbitService.SendMessage(message);
 
-        return Ok(new { message = "Сообщение отправлено", StatusCode = 200 });
+        return Ok(new { message = "Сообщение отправлено", statusCode = 200 });
     }
 
 
