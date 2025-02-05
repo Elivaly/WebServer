@@ -7,12 +7,12 @@ namespace AuthService.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class SenderController : BaseController
+public class SenderController : ControllerBase
 {
     private readonly IRabbitSenderService _rabbitService;
     private readonly IConfiguration _configuration;
 
-    public SenderController(IRabbitSenderService rabbitService, IConfiguration configuration) : base(configuration)
+    public SenderController(IRabbitSenderService rabbitService, IConfiguration configuration)
     {
         _rabbitService = rabbitService;
         _configuration = configuration;
@@ -30,16 +30,9 @@ public class SenderController : BaseController
     [HttpPost]
     public IActionResult SendMessage(Message message)
     {
-        int id = GetID();
-
         using (DBC db = new DBC(_configuration))
         {
             message.Datetime_Create = DateTime.UtcNow;
-            message.ID_User = id;
-            if (message.ID_User == 0)
-            {
-                return Unauthorized(new { message = "Пользователь не вошел в систему", statusCode = 401 });
-            }
             db.Messages.Add(message);
             db.SaveChanges();
         }

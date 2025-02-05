@@ -11,6 +11,8 @@ public class DBC : DbContext
     public DbSet<Message> Messages { get; set; } = null!;
     public DbSet<Role> Roles { get; set; } = null!;
 
+    public DbSet<Token> Tokens { get; set; } = null!;
+
     private IConfiguration _configuration;
     public DBC(IConfiguration config)
     {

@@ -7,6 +7,8 @@ using AuthService.Handler;
 using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using RabbitMQ.Client;
+using Windows.UI.Xaml;
 
 namespace AuthService.Controllers;
 
@@ -66,10 +68,18 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = 401});
             }
             var token = GenerateJwtToken(existingUser);
-            HttpContext.Request.Headers.Add("Authorization", $"{token}");
-
+            HttpContext.Response.Headers.Append("Authorization", $"{token}");
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
+            var userToken = db.Tokens.FirstOrDefault(t => t.ID_User == existingUser.ID);
+            if(userToken != null)
+            {
+                userToken.ID_User = existingUser.ID;
+                userToken.User_Token = token;
+                userToken.Expire_Time = TimeOnly.FromDateTime(DateTime.Now.AddMinutes(1));
+                db.Tokens.Update(userToken);
+                db.SaveChanges();
+            };
             return Ok(new { token = token, StatusCode = 200 });
         }
     }
@@ -87,6 +97,28 @@ public class AuthController : ControllerBase
     [Route("[action]")]
     public IActionResult SignOut()
     {
+        var exit = HttpContext.Request.Headers.ContainsKey("Cookie");
+        if (exit)
+        {
+            using (DBC db = new DBC(_configuration))
+            {
+                var response = HttpContext.Request.Headers["Cookie"].ToString();
+                response = response.Replace("jwtToken=", "").Trim();
+                Console.WriteLine(response);
+                var token = db.Tokens.FirstOrDefault(t => t.User_Token == response);
+                if (token != null)
+                {
+                    token.Expire_Time = TimeOnly.FromDateTime(DateTime.Now);
+                    token.User_Token = "";
+                    db.Tokens.Update(token);
+                    db.SaveChanges();
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Пользователь не вошел в систему", statusCode = 401 });
+                }
+            }
+        }
         if (HttpContext.Request.Headers.ContainsKey("Authorization"))
         {
             HttpContext.Request.Headers.Remove("Authorization");
