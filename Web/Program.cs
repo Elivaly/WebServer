@@ -115,5 +115,4 @@ app.UseMiddleware<TokenValidateMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
 app.Run(builder.Configuration["ApplicationHost:Address"]);

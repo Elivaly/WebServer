@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -112,10 +113,6 @@ public class AuthController : ControllerBase
                     token.User_Token = "";
                     db.Tokens.Update(token);
                     db.SaveChanges();
-                }
-                else
-                {
-                    return Unauthorized(new { message = "Пользователь не вошел в систему", statusCode = 401 });
                 }
             }
         }

@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using AuthService.Handler;
@@ -32,7 +33,7 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("[action]")]
-    public IActionResult CheckTokenTime(string token)
+    public IActionResult CheckTokenTime([Required]string token)
     {
         var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
@@ -87,8 +88,15 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполнения произошла ошибка на стороне сервера</response>
     [HttpPost]
     [Route("[action]")]
-    public IActionResult RefreshTokenTime(string token)
+    public IActionResult RefreshTokenTime([Required] string token)
     {
+        if (HttpContext == null)
+        {
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
 
         var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
@@ -113,19 +121,19 @@ public class TokenController : ControllerBase
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)
                 {
-                    return NotFound();
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
                 }
                 var data = GetDataFromExpiredToken(token);
                 var newToken = GenerateJwtToken(data);
                 HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
-                HttpContext.Request.Headers.Authorization = newToken;
-                return Ok(new { token = newToken, statusCode = 200 });
+                Response.Headers.Add("Authorization", $"Bearer {newToken}");
+                return Ok(new { token = newToken, StatusCode = 200 });
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-            return BadRequest();
+            Console.WriteLine($"Ошибка:{ex.Message}");
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
         }
     }
 
@@ -141,17 +149,120 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполенения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("[action]")]
-    public IActionResult GetUserData(string token)
+    public IActionResult GetUserData([Required] string token)
     {
-        var id = GetID(token);
-        using (DBC db = new DBC(_configuration))
+        if (HttpContext == null)
         {
-            var user = db.Users.FirstOrDefault(u => u.ID == id);
-            if (user == null)
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
+        var handler = new JwtSecurityTokenHandler();
+        try
+        {
+            var tokenValidationParameters = new TokenValidationParameters
             {
-                return NotFound(new { message = "Пользователь не существует", statusCode = 404 });
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var jwt = validatedToken as JwtSecurityToken;
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration))
+            {
+                var expiration = jwt.ValidTo;
+                var timeRemaining = expiration - DateTime.UtcNow;
+                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+                if (timeRemainingMilliSeconds < 0)
+                {
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
+                }
+                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
+                }
+                return Ok(new { username = user.Username, passwordHash = user.Password, StatusCode = 200 });
             }
-            return Ok(new { username = user.Username, passwordHash = user.Password, statusCode = 200 });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
+        }
+    }
+
+
+    /// <summary>
+    /// Декодировка токена
+    /// </summary>
+    /// <remarks>
+    /// Возвращает айдишник пользователя
+    /// </remarks>
+    /// <response code="400">Некорректные данные о токене</response>
+    /// <response code="401">Время жизни токена истекло</response>
+    /// <response code="404">Пользователь не существует</response>
+    /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
+    [HttpGet]
+    [Route("[action]")]
+    public IActionResult GetID([Required] string token)
+    {
+        if (HttpContext == null)
+        {
+            Console.WriteLine("HttpContext is null");
+            return StatusCode(500, "Internal server error: HttpContext is null");
+        }
+        Console.WriteLine($"Request Path: {HttpContext.Request.Path}");
+        Console.WriteLine($"Response Status Code: {HttpContext.Response.StatusCode}");
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
+        var handler = new JwtSecurityTokenHandler();
+        try
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var jwt = validatedToken as JwtSecurityToken;
+            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            // Проверка наличия пользователя в базе данных
+            using (DBC db = new DBC(_configuration))
+            {
+                var expiration = jwt.ValidTo;
+                var timeRemaining = expiration - DateTime.UtcNow;
+                var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
+                if (timeRemainingMilliSeconds < 0)
+                {
+                    return Unauthorized(new { message = "Время жизни токена истекло", StatusCode = 401 });
+                }
+                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
+                if (user == null)
+                {
+                    return NotFound(new { message = "Пользователь не существует", StatusCode = 404 });
+                }
+                return Ok(new { ID = user.ID, StatusCode = 200 });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            return BadRequest(new { message = "Некорректные данные о токене", StatusCode = 400 });
         }
     }
 
@@ -209,43 +320,6 @@ public class TokenController : ControllerBase
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
         return (tokenString);
-    }
-
-    public int GetID(string token)
-    {
-        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
-        var handler = new JwtSecurityTokenHandler();
-        try
-        {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = false,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _configuration["JWT:Issuer"],
-                ValidAudience = _configuration["JWT:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(key)
-            };
-            handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-            var jwt = validatedToken as JwtSecurityToken;
-            var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
-            // Проверка наличия пользователя в базе данных
-            using (DBC db = new DBC(_configuration))
-            {
-                var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
-                if (user == null)
-                {
-                    return -1;
-                }
-                return user.ID;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-            return 0;
-        }
     }
     #endregion
 }
