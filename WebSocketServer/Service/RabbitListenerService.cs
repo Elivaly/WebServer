@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using WebSocketServer.Interface;
-using WebSocketServer.Schems;
+using WebSocketServer.Schemas;
 
 namespace WebSocketServer.Service;
 

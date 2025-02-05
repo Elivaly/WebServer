@@ -6,8 +6,6 @@ using AuthService.Handler;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace AuthService.Controllers;
 
 [Route("api/[controller]")]
@@ -52,7 +50,7 @@ public class TokenController : ControllerBase
             handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
             var jwt = validatedToken as JwtSecurityToken;
             var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
-            // Проверка наличия пользователя в базе данных
+
             using (DBC db = new DBC(_configuration))
             {
                 var expiration = jwt.ValidTo;
@@ -115,7 +113,7 @@ public class TokenController : ControllerBase
             handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
             var jwt = validatedToken as JwtSecurityToken;
             var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
-            // Проверка наличия пользователя в базе данных
+   
             using (DBC db = new DBC(_configuration))
             {
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
@@ -176,7 +174,7 @@ public class TokenController : ControllerBase
             handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
             var jwt = validatedToken as JwtSecurityToken;
             var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
-            // Проверка наличия пользователя в базе данных
+
             using (DBC db = new DBC(_configuration))
             {
                 var expiration = jwt.ValidTo;
@@ -241,7 +239,7 @@ public class TokenController : ControllerBase
             handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
             var jwt = validatedToken as JwtSecurityToken;
             var id = jwt.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
-            // Проверка наличия пользователя в базе данных
+
             using (DBC db = new DBC(_configuration))
             {
                 var expiration = jwt.ValidTo;

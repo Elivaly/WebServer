@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using AuthService.Handler;
-using AuthService.Schems;
+using AuthService.Schemas;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -111,7 +111,7 @@ public class RegistrationController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
 
     }
-    private bool SpaceCheck(string str) // проверка на наличие пробела в строке 
+    private bool SpaceCheck(string str)
     {
         bool checker = false;
         if (str.Contains(" ")) checker = true;

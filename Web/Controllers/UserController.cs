@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using AuthService.Handler;
-using AuthService.Schems;
+using AuthService.Schemas;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.Controllers;

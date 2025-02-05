@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using WebSocketServer.Schems;
+using WebSocketServer.Schemas;
 
 namespace WebSocketServer.Database;
 

@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Security.Authentication;
 
-namespace AuthService.Exceptions;
+namespace AuthService.Middleware;
 
 public class ExceptionHandlerMiddleware(RequestDelegate next)
 {
@@ -11,7 +11,7 @@ public class ExceptionHandlerMiddleware(RequestDelegate next)
     {
         try
         {
-            await _next(httpContext); //продолжаем цепочку вызовов
+            await _next(httpContext);
         }
         catch (AuthenticationException ex)
         {

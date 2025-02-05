@@ -1,4 +1,4 @@
-﻿namespace WebSocketServer.Schems;
+﻿namespace WebSocketServer.Schemas;
 
 public class Message
 {

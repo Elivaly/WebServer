@@ -1,4 +1,4 @@
-﻿using AuthService.Schems;
+﻿using AuthService.Schemas;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

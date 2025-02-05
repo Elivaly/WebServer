@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace AuthService.Schems;
+namespace AuthService.Schemas;
 
 public class Message
 {

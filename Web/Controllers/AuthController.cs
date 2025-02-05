@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using AuthService.Handler;
-using AuthService.Schems;
+using AuthService.Schemas;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -112,11 +112,7 @@ public class AuthController : ControllerBase
                     db.SaveChanges();
                 }
             }
-        }
-        if (HttpContext.Request.Headers.ContainsKey("Authorization"))
-        {
             HttpContext.Request.Headers.Remove("Authorization");
-            Console.WriteLine("Заголовок был удалён");
         }
         HttpContext.Response.Cookies.Delete("jwtToken");
         return Ok(new { message = "Пользователь вышел из системы", StatusCode = 200 });
@@ -144,7 +140,6 @@ public class AuthController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-
     private string Hash(string password)
     {
         byte[] data = Encoding.Default.GetBytes(password);
@@ -154,7 +149,7 @@ public class AuthController : ControllerBase
         return password;
     }
 
-    private bool SpaceCheck(string str) // проверка на наличие пробела в строке 
+    private bool SpaceCheck(string str)
     {
         bool checker = false;
         if (str.Contains(" ")) checker = true;

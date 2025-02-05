@@ -10,7 +10,6 @@ using WebSocketServer.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS Policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
