@@ -33,7 +33,7 @@ public class TokenController : ControllerBase
     /// <response code="500">Во время исполнения произошла внутрисерверная ошибка</response>
     [HttpGet]
     [Route("[action]")]
-    public IActionResult CheckTokenTime([Required]string token)
+    public IActionResult CheckTokenTime([Required] string token)
     {
         var key = Encoding.ASCII.GetBytes(_configuration["JWT:Key"]);
         var handler = new JwtSecurityTokenHandler();
@@ -60,7 +60,7 @@ public class TokenController : ControllerBase
                 var timeRemainingMilliSeconds = (int)timeRemaining.TotalMilliseconds;
                 if (timeRemainingMilliSeconds < 0)
                 {
-                    return Ok(new { timeRemaining = -1, statusCode = 200});
+                    return Ok(new { timeRemaining = -1, statusCode = 200 });
                 }
                 var user = db.Users.FirstOrDefault(u => u.ID == int.Parse(id));
                 if (user == null)

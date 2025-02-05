@@ -6,7 +6,6 @@ namespace AuthService.Exceptions;
 public class ExceptionHandlerMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
-    //private readonly ILogger<ExceptionHandlerMiddleware> _logger = logger;
 
     public async Task InvokeAsync(HttpContext httpContext)
     {

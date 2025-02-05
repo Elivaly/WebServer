@@ -70,14 +70,14 @@ public class RegistrationController : ControllerBase
                 return Unauthorized(new { message = "Пользователь с таким логином уже существует", statusCode = 401 });
             }
 
-            var token = GenerateJwtToken(user);
-            HttpContext.Response.Headers.Append("Authorization", $"{token}");
-
-
-            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
-
             db.Users.Add(user);
             db.SaveChanges();
+
+            var token = GenerateJwtToken(user);
+            HttpContext.Response.Headers.Append("Authorization", $"{token}");
+            HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
+
+
             Token userToken = new Token
             {
                 User_Token = token,

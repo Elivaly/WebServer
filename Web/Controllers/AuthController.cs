@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,8 +7,6 @@ using AuthService.Handler;
 using AuthService.Schems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using RabbitMQ.Client;
-using Windows.UI.Xaml;
 
 namespace AuthService.Controllers;
 
@@ -66,14 +63,14 @@ public class AuthController : ControllerBase
             var existingUser = db.Users.FirstOrDefault(u => u.Username == user.Username && u.Password == user.Password);
             if (existingUser == null)
             {
-                return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = 401});
+                return Unauthorized(new { message = "Неверный логин или пароль", StatusCode = 401 });
             }
             var token = GenerateJwtToken(existingUser);
             HttpContext.Response.Headers.Append("Authorization", $"{token}");
             HttpContext.Response.Cookies.Append("jwtToken", token, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
 
             var userToken = db.Tokens.FirstOrDefault(t => t.ID_User == existingUser.ID);
-            if(userToken != null)
+            if (userToken != null)
             {
                 userToken.ID_User = existingUser.ID;
                 userToken.User_Token = token;

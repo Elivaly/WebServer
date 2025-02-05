@@ -2,12 +2,11 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using AuthService.Interface;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Service;
 
-public class TokenService : ITokenService
+public class TokenService
 {
     private readonly IConfiguration _configuration;
     public TokenService(IConfiguration configuration)
@@ -54,12 +53,5 @@ public class TokenService : ITokenService
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
         return Convert.ToBase64String(randomNumber);
-    }
-}
-public static class ServiceProviderExtensions
-{
-    public static void AddTokenService(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddTransient<ITokenService>(t => new TokenService(configuration));
     }
 }

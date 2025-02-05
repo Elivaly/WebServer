@@ -10,5 +10,5 @@ public class Token
     public int ID_Token { get; set; }
     public int ID_User { get; set; }
     public string User_Token { get; set; }
-    public TimeOnly Expire_Time { get; set; } 
+    public TimeOnly Expire_Time { get; set; }
 }
