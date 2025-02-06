@@ -104,3 +104,5 @@ app.MapControllers();
 app.UseCors("AllowAll");
 
 app.Run(builder.Configuration["ApplicationHost:Address"]);
+
+Console.ReadKey();

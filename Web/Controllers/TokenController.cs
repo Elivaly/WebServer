@@ -123,6 +123,11 @@ public class TokenController : ControllerBase
                 }
                 var data = GetDataFromExpiredToken(token);
                 var newToken = GenerateJwtToken(data);
+                var lastToken = db.Tokens.FirstOrDefault(t => t.ID_User == user.ID);
+                lastToken.User_Token = newToken;
+                lastToken.Expire_Time = TimeOnly.FromDateTime(DateTime.Now.AddMinutes(1));
+                db.Tokens.Update(lastToken);
+                db.SaveChanges();
                 HttpContext.Response.Cookies.Append("jwtToken", newToken, new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddMinutes(1) });
                 Response.Headers.Add("Authorization", $"Bearer {newToken}");
                 return Ok(new { token = newToken, StatusCode = 200 });
